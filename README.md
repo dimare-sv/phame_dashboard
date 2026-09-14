@@ -1,36 +1,140 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 파메 플랫폼 운영 대시보드
 
-## Getting Started
+기획팀용 플랫폼 총괄 KPI 대시보드. 거래액 중심이 아니라 **North Star(WAU) → 8개 레이어** 관점으로 본다.
 
-First, run the development server:
+현재는 **더미 데이터**로 동작한다. 화면 상단의 주황색 고지 띠가 그 사실을 계속 표시한다.
+
+## 실행
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # 배포 전 타입체크 + 빌드
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 구조
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+src/
+  lib/data/
+    types.ts                    도메인 타입 + DashboardSource 계약
+    index.ts                    DATA_SOURCE 로 어댑터 선택 — 서버 전용
+    adapters/mock/
+      build.ts                  명세 → 화면 데이터. 단위·증감색·기간반영이 전부 여기
+      layer-specs.ts            8개 레이어의 지표 명세 ← 실제 내용은 이 파일
+      overview.ts               L0 개요 (타일 8개는 layer-specs 에서 뽑는다)
+  lib/metrics/dictionary.ts     지표 사전 84개 + 불변 id. 카드↔정의를 잇는 고리
+  lib/settings.ts               목표·임계 (유일한 출처)
+  lib/settings-context.tsx      브라우저 로컬 오버라이드 — DB 연동 시 이 훅만 교체
+  app/api/
+    overview/route.ts           GET /api/overview?period=d7
+    layer/[id]/route.ts         GET /api/layer/acq?period=d7
+  app/
+    page.tsx                    L0 개요
+    layer/[slug]/page.tsx       L1 — 8개 레이어가 공유하는 단 하나의 화면
+  components/                   화면 조각 + 차트
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 레이어 8개는 화면이 하나다
 
-## Learn More
+`layer/[slug]/page.tsx` 한 벌이 획득·활성·전환·유지·공급·신뢰·재무·시스템을 전부 그린다.
+구조는 **메인 지표 → 서브 지표 → 분해(대상 × 축) → 레이어 고유 표**로 고정이고,
+레이어마다 달라지는 것은 `layer-specs.ts` 의 데이터뿐이다.
+탭 하나를 고치겠다고 화면 코드를 건드리면 나머지 일곱이 같이 깨진다.
 
-To learn more about Next.js, take a look at the following resources:
+| 레이어 | 메인 지표 | 분해 축 | 고유 표 |
+|---|---|---|---|
+| 01 획득 | 신규 가입자 | 유입채널 · 가입방식 · 지역 · 등급 | 등급 승급 처리 |
+| 02 활성 | 기능 활성률 | 기능영역 · 플랫폼 · 시간대 · 유저 구분 | 기능영역별 체류·이탈 |
+| 03 전환 | 구매 전환율 | 결제수단 · 유입경로 · 가격대 · 플랫폼 | 결제 실패 사유 |
+| 04 유지 | D7 리텐션 | 유입채널 · 첫 구매 여부 · 가입방식 · 등급 | 이탈 위험군 세그먼트 |
+| 05 공급 | 미니샵 활성률 | 카테고리 · 판매자 등급 · 개설 기간 · 지역 | 카테고리별 수급 |
+| 06 신뢰·품질 | CS 첫응답 시간 | 문의 유형 · 채널 · 접수 시간대 · 플랫폼 | 문의 유형별 처리 |
+| 07 재무 | GMV | 카테고리 · 가격대 · 결제수단 · 플랫폼 | 카테고리별 거래 |
+| 08 시스템 | 크래시프리율 | 플랫폼 · 화면 · 앱 버전 · OS 버전 | 화면별 크래시 |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+개요의 타일 8개는 이 표의 메인 지표와 **같은 값을 같은 곳에서** 가져온다.
+타일을 누르면 해당 레이어로 들어간다.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 데이터 교체 지점은 한 곳이다
 
-## Deploy on Vercel
+화면은 어댑터를 직접 import 하지 않는다. 항상 `getDashboardSource()` 를 거치고,
+그 호출은 `app/api/*` 라우트에서만 일어난다. GA4 서비스 계정 키나 DB 접속 정보가
+브라우저 번들에 실리지 않게 하기 위한 것이다.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+실데이터를 붙일 때는 `src/lib/data/adapters/` 에 어댑터를 하나 추가하고
+`index.ts` 의 `switch` 에 `case` 를 붙이면 끝난다. **화면 코드는 바뀌지 않는다.**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+DATA_SOURCE=mock   (기본)
+DATA_SOURCE=ga4    GA4 Data API — user_id 전송 반영 후
+DATA_SOURCE=db     PostgreSQL daily_metrics 집계 테이블
+```
+
+## 로그인
+
+`@pharmearth.kr` 구글 계정만 들어올 수 있다. 로그인 화면과 인증 콜백을 빼고 **전부** 막혀 있고,
+새 화면을 추가해도 자동으로 막힌다 (`src/middleware.ts` 는 화이트리스트가 아니라 블랙리스트다).
+
+- 도메인 검사는 **서버(`src/auth.ts` 의 `signIn` 콜백)에서** 한다.
+  구글의 `hd` 파라미터는 계정 선택 화면의 힌트일 뿐이고, 요청을 직접 만들면 우회된다.
+- API 는 401 JSON 을 준다. 로그인 화면 HTML 로 리다이렉트하면 fetch 쪽에서
+  JSON 파싱 에러가 나고, 화면에는 "로그인이 풀렸다" 대신 엉뚱한 메시지가 뜬다.
+- **환경변수가 없으면 운영에서는 열리지 않는다.** 개발에서만 로그인을 건너뛰고,
+  그때는 레일 하단에 "로그인 없음 — 아무나 접근 가능" 이라고 표시된다.
+
+### Google Cloud 설정
+
+1. [console.cloud.google.com](https://console.cloud.google.com) → 프로젝트 선택(또는 새로 만들기)
+2. **API 및 서비스 → OAuth 동의 화면**
+   - User Type: **내부(Internal)** — Workspace 조직 계정만 쓸 수 있게 한다
+   - 앱 이름 `파메 운영 대시보드`, 지원 이메일 입력 후 저장
+3. **API 및 서비스 → 사용자 인증 정보 → 사용자 인증 정보 만들기 → OAuth 클라이언트 ID**
+   - 애플리케이션 유형: **웹 애플리케이션**
+   - 승인된 리디렉션 URI 에 아래 둘을 등록
+     - `http://localhost:3000/api/auth/callback/google` (로컬 개발용)
+     - `https://<배포주소>/api/auth/callback/google` (Vercel 주소)
+4. 발급된 **클라이언트 ID / 보안 비밀번호**를 `.env.local` 에 넣는다 (`.env.example` 참고)
+5. `AUTH_SECRET` 은 `npx auth secret` 으로 만든다
+
+Vercel 에 올릴 때는 같은 값을 Project Settings → Environment Variables 에 넣는다.
+
+## 설계 규칙 (지키지 않으면 화면이 거짓말을 한다)
+
+- **델타 색은 방향이 아니라 `good`(좋아졌나)을 따른다.** CS 첫응답 시간처럼
+  lower_is_better 지표는 ▼가 초록이다. `Delta.good` 을 반드시 채울 것.
+- **flow 와 stock 을 섞지 않는다.** 신규 가입자(flow)는 기간에 따라 변하고,
+  누적 회원(stock)은 변하지 않는다. stock 을 보여줄 때는 "기간 필터 비적용" 배지를 단다.
+- **기간 필터를 따르지 않는 카드는 칩으로 명시한다.** WAU 추이·WAU 구성·코호트가 그렇다
+  (주 단위 지표 / 코호트 축).
+- **상태색(good/warn/crit)은 시리즈 색과 분리**돼 있고, 항상 텍스트 라벨과 함께 쓴다.
+- **작은 라벨은 12px 아래로 내리지 않는다.** 한글은 그 아래에서 뭉개진다. 자간도 넓히지 않는다.
+- 시리즈 3색과 등급 램프는 색각이상(CVD) 전체 쌍 검증을 통과한 값이다. 임의로 바꾸지 말 것.
+- **막대는 0을 바닥으로 읽힌다.** 99.66% 같이 변동폭이 아주 작은 지표는 막대로 그리면
+  전부 같은 높이가 되는데, 축을 잘라서 속이는 대신 **선으로 바꾼다**
+  (`trend.kind`, 판정은 어댑터가 한다). 판정 기준은 지표이지 기간이 아니다 —
+  기간을 바꿀 때마다 차트 종류가 바뀌면 같은 지표로 안 읽힌다.
+- **증감의 자릿수는 값의 자릿수와 맞춘다.** 99.66% 지표의 -0.04를 "0.0%p"로 쓰면
+  변화가 없는 것처럼 읽힌다.
+- **0과 미계측을 같이 쓰지 않는다.** 시스템 탭의 Web 크래시는 0이 아니라 측정하지
+  않는 것이고, 그 사실이 화면에 경고로 나와야 한다.
+- **목표 미달은 경고가 아니다.** 목표는 늘 앞에 있는 값이라 미달을 경고로 만들면 경고가
+  상시 켜지고, 그러면 아무도 안 본다. 경고는 `kind: "limit"`(지금 문제가 있다는 선)과
+  위험선에만 붙인다. 목표 미달은 타일에 "미달" 표시만 남긴다.
+- **목표·임계는 `src/lib/settings.ts` 한 곳에만 적는다.** 타일 하단 표시, 경고 점,
+  "주의 필요" 목록이 전부 여기서 계산된다. 화면에 숫자를 직접 적으면 목표를 한 번 바꿀 때
+  세 군데가 어긋난다.
+
+## 이미지 저장
+
+- 카드 헤더의 `↓` — 그 카드만 PNG
+- 상단 **이미지 저장** — 현재 화면 전체 PNG
+
+`html-to-image` 로 DOM 을 그대로 굽는다. 저장 버튼 자신은 `data-capture="exclude"` 로 빠진다.
+
+## 남은 일
+
+- 각 레이어의 **메인 지표·분해 축 확정** — 현재 구성은 지표 사전 기준 제안이다
+- 개발팀 회신 대기 P0 3건 — GA4 `user_id` 전송 / `user_type` user property /
+  가입 시점 유입정보 `users` 적재. 셋 다 **소급 불가**라 오픈 전에 들어가야 한다.
+- `daily_metrics` 집계 테이블 설계 (DB 스키마 수령 후)
