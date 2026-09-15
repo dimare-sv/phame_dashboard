@@ -1,7 +1,4 @@
-"use client";
-
-import { useRef, useState, type ReactNode } from "react";
-import { captureElement } from "@/lib/capture";
+import type { ReactNode } from "react";
 
 interface Props {
   title: string;
@@ -13,75 +10,27 @@ interface Props {
   bare?: boolean;
   className?: string;
   children: ReactNode;
-  /** 이미지 저장 파일명에 쓰일 이름 (기본값: title) */
-  captureName?: string;
 }
 
 /**
- * 카드 하나 = 이미지 저장 한 단위.
- * 헤더 우측의 ↓ 가 그 카드만 잘라서 PNG 로 떨군다.
+ * 카드 하나.
+ *
+ * 이미지 저장은 상단의 "이미지 저장" 하나로만 한다.
+ * 카드마다 ↓ 를 달면 화면 어디를 봐도 버튼이 먼저 눈에 들어와서
+ * 정작 읽어야 할 숫자가 뒤로 밀린다.
  */
-export default function Card({
-  title,
-  note,
-  fixedChip,
-  bare,
-  className,
-  children,
-  captureName,
-}: Props) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function save() {
-    if (!ref.current) return;
-    setBusy(true);
-    try {
-      await captureElement(ref.current, captureName ?? title);
-    } finally {
-      setBusy(false);
-    }
-  }
-
+export default function Card({ title, note, fixedChip, bare, className, children }: Props) {
   return (
-    <div className={`card${className ? ` ${className}` : ""}`} ref={ref}>
-      {/* 헤더가 없는 카드도 저장 단위는 카드다 — 버튼만 모서리에 띄운다 */}
-      {bare && (
-        <span className="bare-act" data-capture="exclude">
-          <button
-            className="icon-btn"
-            type="button"
-            title="이미지로 저장"
-            onClick={save}
-            disabled={busy}
-          >
-            ↓
-          </button>
-        </span>
-      )}
+    <div className={`card${className ? ` ${className}` : ""}`}>
       {!bare && (
         <div className="card-hd">
           <h2>{title}</h2>
           {note && <span className="note">{note}</span>}
           {fixedChip && (
-            <span
-              className="fixed-chip"
-              title="이 카드는 상단 기간 필터를 따르지 않습니다"
-            >
+            <span className="fixed-chip" title="이 카드는 상단 기간 필터를 따르지 않습니다">
               {fixedChip}
             </span>
           )}
-          <span className="act" data-capture="exclude">
-            <button
-              className="icon-btn"
-              type="button"
-              title="이미지로 저장"
-              onClick={save}
-              disabled={busy}
-            >
-              ↓
-            </button>
-          </span>
         </div>
       )}
       {children}

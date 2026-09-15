@@ -63,7 +63,7 @@ export default function SettingsPage() {
         필요합니다. 그 전까지는 각자 조정해 보는 용도로 쓰시면 됩니다.
       </div>
 
-      <Card title="" bare captureName="목표임계">
+      <Card title="" bare>
         <div className="goal-scroll">
           <table className="goal">
             <thead>
@@ -170,7 +170,7 @@ export default function SettingsPage() {
       </Card>
 
       <Band label="읽는 규칙" />
-      <Card title="이 값들을 정할 때" note="판정 방식" captureName="목표규칙">
+      <Card title="이 값들을 정할 때" note="판정 방식">
         <div className="alerts">
           <div className="hl-row">
             <span className="bullet">▸</span>

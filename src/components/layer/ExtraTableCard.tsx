@@ -7,7 +7,7 @@ import type { ExtraTable } from "@/lib/data/types";
  */
 export default function ExtraTableCard({ table }: { table: ExtraTable }) {
   return (
-    <Card title={table.title} note={table.note} captureName={table.title}>
+    <Card title={table.title} note={table.note}>
       <div className="mv-wrap">
         <table className="mv">
           <thead>

@@ -66,7 +66,9 @@ export default function Shell({ children, user, signOut }: ShellProps) {
         </span>
       </div>
 
-      <div className="app">
+      {/* 관점이 바뀌면 작업 영역 바탕색이 바뀐다 — 필터 드롭다운을 보지 않아도
+          지금 어느 쪽 눈으로 보고 있는지 알 수 있어야 한다 */}
+      <div className="app" data-lens={hasPeriod ? lens : "all"}>
         <aside className="rail">
           <div className="brand">
             <span className="mark" aria-hidden="true">

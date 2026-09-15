@@ -27,7 +27,7 @@ export default function OverviewPage() {
     <div className="canvas">
       <Band label="North Star" />
       <div className="r-hero">
-        <Card title="" bare className="hero-card" captureName="NorthStar">
+        <Card title="" bare className="hero-card">
           <span className="hero-eyebrow">{ns.eyebrow}</span>
           <span className="hero-name">{ns.name}</span>
           <span className="hero-val num">{ns.value}</span>
@@ -79,7 +79,6 @@ export default function OverviewPage() {
           note={`최근 ${data.wauTrend.length}주`}
           fixedChip="기간 필터 비적용"
           className="chart-card"
-          captureName="WAU추이"
         >
           <div className="chart-wrap">
             <WauTrendChart points={data.wauTrend} />
@@ -98,7 +97,6 @@ export default function OverviewPage() {
           title="WAU 구성 추이"
           note={`신규 · 복귀 · 유지 / ${data.wauComposition.length}주`}
           fixedChip="기간 필터 비적용"
-          captureName="WAU구성추이"
         >
           <div className="chart-wrap" style={{ padding: "0 18px 16px" }}>
             <WauStackChart points={data.wauComposition} />

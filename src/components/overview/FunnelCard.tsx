@@ -17,7 +17,7 @@ export default function FunnelCard({
   const worst = steps.indexOf(Math.min(...steps));
 
   return (
-    <Card title="결제 퍼널" note={periodLabel} captureName="결제퍼널">
+    <Card title="결제 퍼널" note={periodLabel}>
       <div className="funnel">
         {stages.map((s, i) => (
           <div key={s.event}>

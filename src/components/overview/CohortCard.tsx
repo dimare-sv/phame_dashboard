@@ -25,7 +25,6 @@ export default function CohortCard({ rows }: { rows: CohortRow[] }) {
       title="가입 코호트 리텐션"
       note="가입 주차별 재방문율"
       fixedChip="기간 필터 비적용"
-      captureName="코호트리텐션"
     >
       <div className="cohort-wrap" onMouseLeave={hide}>
         <table className="cohort">

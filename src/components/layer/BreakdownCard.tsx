@@ -77,7 +77,7 @@ export default function BreakdownCard({
   }
 
   return (
-    <Card title="" bare captureName={`분해_${target.label}_${axis.label}`}>
+    <Card title="" bare>
       <div className="bd-ctrl">
         <span className="bd-key">대상</span>
         {breakdown.targets.map((t) => (

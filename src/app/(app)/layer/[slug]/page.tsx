@@ -57,7 +57,7 @@ export default function LayerPage() {
       )}
       <Band label="메인 지표" hint={cmpText} />
       <div className="r-hero">
-        <Card title="" bare className="hero-card" captureName={m.eyebrow}>
+        <Card title="" bare className="hero-card">
           <span className="hero-eyebrow">{m.eyebrow}</span>
           <span className="hero-name">{m.name}</span>
           <span className="hero-val num">{m.value}</span>
@@ -80,7 +80,6 @@ export default function LayerPage() {
           title={`${m.eyebrow} 추이`}
           note={data.trend.granularity}
           className="chart-card"
-          captureName={`${m.eyebrow}_추이`}
         >
           <div className="chart-wrap">
             <TrendChart

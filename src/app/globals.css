@@ -588,12 +588,6 @@ main {
   border-radius: var(--r);
   box-shadow: var(--shadow);
 }
-.bare-act {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 2;
-}
 .card-hd {
   display: flex;
   align-items: center;
@@ -620,37 +614,6 @@ main {
 .card-hd .note {
   font-size: 12.5px;
   color: var(--muted);
-}
-.card-hd .act {
-  margin-left: auto;
-}
-.icon-btn {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  background: var(--card);
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1;
-  padding: 0;
-  font-family: inherit;
-}
-.icon-btn:hover:not(:disabled) {
-  color: var(--navy);
-  border-color: var(--navy);
-  background: var(--navy-soft);
-}
-.icon-btn:disabled {
-  opacity: 0.5;
-  cursor: progress;
-}
-.icon-btn:focus-visible {
-  outline: 2px solid var(--navy);
-  outline-offset: 1px;
 }
 
 /* ---------- hero ---------- */
@@ -2055,4 +2018,36 @@ table.goal tr:last-child td {
   color: var(--ink-2);
   background: var(--card-2);
   border: 1px solid var(--line-soft);
+}
+
+/* ── 관점별 바탕색 ───────────────────────────────────────────
+   구매는 파랑 쪽, 판매는 주황 쪽 — 분해 차트의 등급 색과 같은 계열이라
+   "이 색은 구매자/판매자" 라는 연결이 화면 안에서 한 번만 학습된다.
+   카드는 흰색 그대로라 대비는 유지된다. */
+main {
+  background: var(--ground);
+}
+.app[data-lens="demand"] {
+  /* 기본 바탕(#eff3f8)이 이미 푸른기가 있어서 살짝 얹으면 구분이 안 된다 */
+  --ground: #dee9f8;
+  --lens-edge: var(--navy);
+}
+.app[data-lens="supply"] {
+  --ground: #faf1e4;
+  --lens-edge: #b0600c;
+}
+.app[data-lens="demand"] .lens-note-on {
+  background: #cfdff4;
+  border-left-color: var(--lens-edge);
+}
+.app[data-lens="supply"] .lens-note-on {
+  background: #f4e6d2;
+  border-left-color: var(--lens-edge);
+}
+/* 관점을 고르면 상단 필터 자신에도 같은 색을 얹어, 바탕색의 출처를 분명히 한다 */
+.app[data-lens="demand"] .sel[aria-label="구매·판매 관점"],
+.app[data-lens="supply"] .sel[aria-label="구매·판매 관점"] {
+  border-color: var(--lens-edge);
+  color: var(--lens-edge);
+  font-weight: 600;
 }

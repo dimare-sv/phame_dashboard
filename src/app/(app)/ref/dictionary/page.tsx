@@ -74,7 +74,7 @@ export default function DictionaryPage() {
 
       <Band label="지표 목록" hint={`${shown}개 표시 중`} />
 
-      <Card title="" bare captureName="지표사전">
+      <Card title="" bare>
         <div className="dict-bar">
           <input
             className="dict-search"
@@ -177,7 +177,7 @@ export default function DictionaryPage() {
         ))}
       </Card>
 
-      <Card title="이 사전을 쓸 때" note="읽는 규칙" captureName="사전주의사항">
+      <Card title="이 사전을 쓸 때" note="읽는 규칙">
         <div className="alerts">
           <div className="hl-row">
             <span className="bullet">▸</span>

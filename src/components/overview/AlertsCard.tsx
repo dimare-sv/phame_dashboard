@@ -36,7 +36,6 @@ export default function AlertsCard({
     <Card
       title="주의 필요"
       note={breaches.length ? `목표·임계 이탈 ${breaches.length}건` : "이탈 없음"}
-      captureName="주의필요"
     >
       <div className="alerts">
         {breaches.length === 0 && (

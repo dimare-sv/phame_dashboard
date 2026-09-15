@@ -24,7 +24,7 @@ export default function PlatformCard({
   const total = platform.users.reduce((a, b) => a + b, 0);
 
   return (
-    <Card title="iOS · Android · Web" note={`${periodLabel} · ${platform.base}`} captureName="플랫폼별현황">
+    <Card title="iOS · Android · Web" note={`${periodLabel} · ${platform.base}`}>
       <div className="pf-body">
         <Donut
           counts={platform.users}
