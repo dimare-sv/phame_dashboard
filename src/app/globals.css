@@ -85,26 +85,31 @@ body {
 }
 
 /* ========== 더미 데이터 고지 ========== */
+/* 연한 배경이면 관점 바탕색(특히 판매=주황 계열)에 묻힌다.
+   "이 숫자는 전부 가짜" 는 어떤 관점에서도 가장 먼저 읽혀야 하므로 진한 바로 둔다. */
 .notice {
-  background: #fcf0dc;
-  color: #8a4b05;
+  background: #8a4b05;
+  color: #fdf3e6;
   font-size: 13px;
   font-weight: 500;
   padding: 9px 22px;
   display: flex;
   gap: 10px;
   align-items: center;
-  border-bottom: 1px solid #e8cda0;
+  border-bottom: 1px solid #6d3a03;
 }
 .notice .tag {
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  background: #a25807;
-  color: #fff;
+  background: #fdf3e6;
+  color: #8a4b05;
   padding: 2px 9px;
   border-radius: 3px;
   flex-shrink: 0;
+}
+.notice b {
+  color: #fff;
 }
 .notice b {
   font-weight: 700;
@@ -2028,20 +2033,21 @@ main {
   background: var(--ground);
 }
 .app[data-lens="demand"] {
-  /* 기본 바탕(#eff3f8)이 이미 푸른기가 있어서 살짝 얹으면 구분이 안 된다 */
-  --ground: #dee9f8;
+  /* 기본 바탕(#eff3f8) 자체가 푸른기 있는 회색이라, 파랑을 얹는 정도로는 구분이 안 된다.
+     채도를 확실히 올려야 "전체 / 구매" 가 갈린다. */
+  --ground: #c9dcf5;
   --lens-edge: var(--navy);
 }
 .app[data-lens="supply"] {
-  --ground: #faf1e4;
+  --ground: #f7e6c9;
   --lens-edge: #b0600c;
 }
 .app[data-lens="demand"] .lens-note-on {
-  background: #cfdff4;
+  background: #b7cded;
   border-left-color: var(--lens-edge);
 }
 .app[data-lens="supply"] .lens-note-on {
-  background: #f4e6d2;
+  background: #efd8ad;
   border-left-color: var(--lens-edge);
 }
 /* 관점을 고르면 상단 필터 자신에도 같은 색을 얹어, 바탕색의 출처를 분명히 한다 */

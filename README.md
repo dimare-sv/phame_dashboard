@@ -153,3 +153,6 @@ Vercel 에 올릴 때는 같은 값을 Project Settings → Environment Variable
 - 개발팀 회신 대기 P0 3건 — GA4 `user_id` 전송 / `user_type` user property /
   가입 시점 유입정보 `users` 적재. 셋 다 **소급 불가**라 오픈 전에 들어가야 한다.
 - `daily_metrics` 집계 테이블 설계 (DB 스키마 수령 후)
+- **CAC 는 광고비가 아니라 추천 보상·쿠폰 기준**이다. 유료 광고를 집행하지 않으므로
+  광고비는 측정 불가가 아니라 값이 0 이다. 유료 채널을 시작하면 이 전제가 바뀌므로
+  그때 `07 재무`의 단위 경제 표를 다시 잡아야 한다.
