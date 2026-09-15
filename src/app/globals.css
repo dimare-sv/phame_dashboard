@@ -639,6 +639,9 @@ main {
   flex-direction: column;
 }
 .hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12.5px;
   font-weight: 700;
   color: var(--navy);
@@ -861,6 +864,22 @@ main {
   display: block;
   width: 100%;
   height: 34px;
+}
+.spark-wrap {
+  position: relative;
+  display: block;
+}
+/* SVG 안의 <circle> 은 preserveAspectRatio="none" 때문에 타원으로 찌그러진다.
+   그래서 호버 점은 SVG 밖의 HTML 요소로 그린다 — 늘어나지 않으니 항상 원이다. */
+.spark-dot {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 2px solid;
+  pointer-events: none;
 }
 .t-foot {
   display: flex;
@@ -1935,6 +1954,33 @@ table.goal tr:last-child td {
   color: var(--crit);
 }
 
+/* ── 정보 아이콘 — 제목 옆에서 지표 사전 정의를 말풍선으로 보여준다 ── */
+.info-tip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid var(--faint);
+  color: var(--faint);
+  font-family: var(--serif, Georgia, serif);
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+  cursor: help;
+  background: none;
+  padding: 0;
+}
+.info-tip:hover,
+.info-tip:focus-visible {
+  border-color: var(--navy);
+  color: var(--navy);
+  outline: none;
+}
+
 /* tooltip */
 .tip {
   position: fixed;
@@ -1953,6 +1999,30 @@ table.goal tr:last-child td {
 }
 .tip.show {
   opacity: 1;
+}
+/* 지표 정의처럼 줄바꿈이 있는 설명은 한 줄 값 말풍선과 다른 모양이 필요하다 */
+.tip-wide {
+  white-space: normal;
+  width: 268px;
+  line-height: 1.6;
+}
+.tip-wide .ti-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 5px;
+}
+.tip-wide .ti-def {
+  color: #dbe4f2;
+}
+.tip-wide .ti-calc {
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: #9eb2ce;
+  word-break: break-all;
 }
 .tip .tt {
   font-size: 12px;

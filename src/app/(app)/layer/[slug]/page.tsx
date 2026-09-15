@@ -8,6 +8,7 @@ import Stub from "@/components/Stub";
 import TrendChart from "@/components/charts/TrendChart";
 import BreakdownCard from "@/components/layer/BreakdownCard";
 import ExtraTableCard from "@/components/layer/ExtraTableCard";
+import InfoTip from "@/components/InfoTip";
 import { useDashboard } from "@/lib/dashboard-context";
 import { useDashboardData } from "@/lib/use-dashboard-data";
 import { LENS_HINT, LENS_LABEL, euro, lensApplies, lensFor, type Lens } from "@/lib/segments";
@@ -92,7 +93,10 @@ export default function LayerPage() {
       <Band label="메인 지표" hint={cmpText} />
       <div className="r-hero">
         <Card title="" bare className="hero-card">
-          <span className="hero-eyebrow">{m.eyebrow}</span>
+          <span className="hero-eyebrow">
+            {m.eyebrow}
+            <InfoTip metricId={m.metricId} />
+          </span>
           <span className="hero-name">{m.name}</span>
           <span className="hero-val num">{m.value}</span>
           <span style={{ marginTop: 9 }}>
@@ -132,7 +136,10 @@ export default function LayerPage() {
       <div className="subtiles">
         {data.subs.map((s) => (
           <div className="subtile" key={s.name}>
-            <span className="sn">{s.name}</span>
+            <span className="sn">
+              {s.name}
+              <InfoTip metricId={s.metricId} />
+            </span>
             <span className="srow">
               <span className="sv num">{s.value}</span>
               <span className={`delta ${s.delta.good ? "d-good" : "d-bad"}`}>{s.delta.text}</span>

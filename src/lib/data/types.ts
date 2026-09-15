@@ -175,6 +175,8 @@ export interface SubTile {
   name: string;
   value: string;
   delta: Delta;
+  /** 지표 사전의 id — 있으면 제목 옆 정보 아이콘이 정의·계산식을 띄운다 */
+  metricId?: string;
 }
 
 /**
@@ -205,6 +207,12 @@ export interface BreakdownAxis {
   ordinal?: boolean;
   /** 중간에 역할 경계가 있는 축(등급) — 색을 두 계열로 나눈다 */
   roleSplit?: boolean;
+  /**
+   * 항목 라벨 → 고정 색. 가입방식처럼 실제 서비스 브랜드가 있는 축에 쓴다
+   * ("카카오"는 카카오 노란색). CVD 분리는 통과하지만 톤 자체가 카테고리 팔레트의
+   * 명도·채도 규칙 밖에 있을 수 있다 — 범례·표에 항상 라벨이 같이 있어야 한다.
+   */
+  colors?: Record<string, string>;
   /** 대상 id → 이 조합에만 붙는 선행조건 경고 */
   caveats?: Record<string, string>;
 }
@@ -250,6 +258,8 @@ export interface LayerData {
     delta: Delta;
     /** 하단 2칸 보조값 */
     footer: { k: string; v: string; pending?: string }[];
+    /** 지표 사전의 id — 있으면 제목 옆 정보 아이콘이 정의·계산식을 띄운다 */
+    metricId: string;
   };
   trend: {
     granularity: string;

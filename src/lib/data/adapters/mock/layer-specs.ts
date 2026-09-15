@@ -22,6 +22,20 @@ const WEB_CRASH_CAVEAT =
 /** 활성 유저는 기간마다 모수가 바뀐다 — 어제는 DAU, 7일은 WAU, 28일은 MAU */
 const ACTIVE_USERS: [number, number, number] = [4120, 12480, 39980];
 
+/**
+ * 간편가입 브랜드 색. CVD 분리는 검증기로 통과했지만(ΔE 16.8+), 톤 자체는
+ * 일반 카테고리 팔레트의 명도·채도 규칙 밖에 있다(카카오 노랑은 아주 밝고,
+ * 애플 검정은 채도가 없다) — 실제 브랜드 색이라 바꿀 수 없는 값이고,
+ * 그래서 범례·표에 항상 라벨이 같이 있는 도넛에서만 쓴다.
+ */
+const SIGNUP_BRAND_COLORS: Record<string, string> = {
+  카카오: "#F7D000",
+  애플: "#1A1A1A",
+  네이버: "#03C75A",
+  이메일: "#7A8699",
+};
+
+
 export const LAYER_SPECS: LayerSpec[] = [
   /* ================================ 01 획득 ================================ */
   {
@@ -75,6 +89,7 @@ export const LAYER_SPECS: LayerSpec[] = [
         id: "signup",
         label: "가입방식",
         items: ["카카오", "애플", "네이버", "이메일"],
+        colors: SIGNUP_BRAND_COLORS,
         ratios: {
           signup: [0.502, 0.21, 0.166, 0.122],
           member: [0.49, 0.208, 0.179, 0.123],
@@ -295,6 +310,22 @@ export const LAYER_SPECS: LayerSpec[] = [
         ordinal: true,
       },
       {
+        id: "type",
+        label: "주문유형",
+        /* 정기구매·선물하기는 지금 "관심도"(버튼 클릭)만 잡히고, 실제 주문유형별
+           집계는 안 된다 — 아래 캐비엇 참고 */
+        items: ["일반구매", "정기구매", "선물하기"],
+        ratios: {
+          order: [0.862, 0.086, 0.052],
+          attempt: [0.868, 0.081, 0.051],
+        },
+        d: [1.2, 18.4, 24.6],
+        caveats: {
+          order: "<b>이 축은 아직 실제 집계가 안 됩니다.</b> GA4 <code>purchase</code> 이벤트에 주문유형을 구분하는 파라미터가 없습니다 — 지금 있는 건 정기구매·선물하기 <b>버튼을 눌렀다</b>는 클릭 이벤트뿐이고, 그 클릭이 실제 결제 완료로 이어졌는지는 잇지 못합니다. <b>purchase 이벤트에 order_type(일반/정기/선물) 파라미터 추가가 필요합니다.</b> 아래 수치는 그 파라미터가 있다는 가정하의 예시입니다.",
+          attempt: "<b>이 축은 아직 실제 집계가 안 됩니다.</b> GA4 <code>purchase</code> 이벤트에 주문유형을 구분하는 파라미터가 없습니다 — 지금 있는 건 정기구매·선물하기 <b>버튼을 눌렀다</b>는 클릭 이벤트뿐이고, 그 클릭이 실제 결제 완료로 이어졌는지는 잇지 못합니다. <b>purchase 이벤트에 order_type(일반/정기/선물) 파라미터 추가가 필요합니다.</b> 아래 수치는 그 파라미터가 있다는 가정하의 예시입니다.",
+        },
+      },
+      {
         id: "buyer",
         label: "구매자 유형",
         /* 비회원도 게스트로 주문할 수 있고, 판매자(파머셀러 이상)도 구매한다.
@@ -340,6 +371,29 @@ export const LAYER_SPECS: LayerSpec[] = [
           "결제 실패 <b>{0}건</b> 중 인증 실패는 재시도로 대부분 회복되지만, " +
           "<b>한도 초과·잔액 부족</b>은 회복률이 낮아 사실상 이탈입니다.",
       },
+      {
+        title: "주문유형별 현황",
+        note: "일반 · 정기 · 선물",
+        showOnAxis: "type",
+        head: ["주문유형", "건수", "매출", "객단가", "재구매율"],
+        cols: [
+          { kind: "count", unit: "건", flow: true, sum: true },
+          { kind: "eok", flow: true, sum: true },
+          { kind: "num1", unit: "만원" },
+          { kind: "rate" },
+        ],
+        rows: [
+          ["일반구매", 5610, 10.3, 18.4, 22.4],
+          ["정기구매", 560, 1.8, 32.6, 68.2],
+          ["선물하기", 339, 0.8, 24.1, 8.6],
+        ],
+        total: true,
+        footnote:
+          "<b>정기구매의 재구매율(68.2%)이 일반구매(22.4%)의 3배</b>입니다 — 한 번 붙잡으면 계속 " +
+          "사는 상품군입니다. 선물하기는 반대로 <b>8.6%</b>에 그쳐 원래 일회성으로 의도된 기능입니다. " +
+          "다만 지금 GA4 <code>purchase</code> 이벤트에는 주문유형 파라미터가 없어 <b>이 표는 실제로 " +
+          "집계되지 않습니다</b> — order_type(일반/정기/선물) 파라미터 추가가 필요합니다.",
+      },
     ],
   },
 
@@ -366,9 +420,30 @@ export const LAYER_SPECS: LayerSpec[] = [
       { name: "이탈 위험군", kind: "count", unit: "명", v: 1840, vp: [1780, 1840, 1960], d: [-2.4, -1.8, 3.2], up: false },
       { name: "복귀 유저", kind: "count", unit: "명", v: 1990, flow: true, d: [4.2, 6.8, 11.4] },
       { name: "평균 방문 주기", kind: "days", v: 4.2, vp: [4.0, 4.2, 4.5], d: [-0.2, -0.1, 0.3], up: false },
-      /* 여기부터 공급측. 구매자 리텐션만 보면 양면 플랫폼의 절반을 눈 감는 것이다 */
-      { name: "판매자 M1 리텐션", kind: "rate", v: 71.4, vp: [72.1, 71.4, 70.2], d: [0.9, 1.4, 2.1] },
-      { name: "판매자 이탈률", kind: "rate", v: 6.8, vp: [6.4, 6.8, 7.4], d: [-0.3, 0.4, 1.1], up: false },
+      /*
+       * 구매 관점에서 "판매자 M1 리텐션" 이 그대로 보이면 필터와 화면이 다른 말을 한다.
+       * lensOnly 로 관점마다 다른 지표를 내보낸다 — 전체(all)에서는 양쪽 다 보인다.
+       */
+      { name: "재구매 전환율", kind: "rate", v: 38.4, vp: [37.6, 38.4, 39.8], d: [1.2, 0.8, 2.1], lensOnly: ["demand"] },
+      {
+        name: "평균 재구매 소요일",
+        kind: "days",
+        v: 21.4,
+        vp: [22.1, 21.4, 20.6],
+        d: [-0.6, -0.3, -1.1],
+        up: false,
+        lensOnly: ["demand"],
+      },
+      { name: "판매자 M1 리텐션", kind: "rate", v: 71.4, vp: [72.1, 71.4, 70.2], d: [0.9, 1.4, 2.1], lensOnly: ["supply"] },
+      {
+        name: "판매자 이탈률",
+        kind: "rate",
+        v: 6.8,
+        vp: [6.4, 6.8, 7.4],
+        d: [-0.3, 0.4, 1.1],
+        up: false,
+        lensOnly: ["supply"],
+      },
     ],
     targets: [
       { id: "cohort", label: "가입 코호트", unit: "명", v: 1204, flow: true },
@@ -400,6 +475,7 @@ export const LAYER_SPECS: LayerSpec[] = [
         id: "signup",
         label: "가입방식",
         items: ["카카오", "애플", "네이버", "이메일"],
+        colors: SIGNUP_BRAND_COLORS,
         ratios: {
           cohort: [0.502, 0.21, 0.166, 0.122],
           active: [0.486, 0.216, 0.174, 0.124],

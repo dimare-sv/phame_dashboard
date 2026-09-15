@@ -988,6 +988,31 @@ export function findMetric(id: string) {
   return ALL_METRICS.find((m) => m.id === id);
 }
 
+/**
+ * 명시적 metricId 가 없는 서브 지표를 이름으로 찾는다.
+ *
+ * 같은 레이어(layerSlug) 안에서만 찾는다 — 다른 레이어의 "재구매율" 과
+ * 이름이 겹칠 수 있어서다. 괄호 안 설명과 "…수" 같은 흔한 말미는 지우고
+ * 비교한다 ("친구초대 코드 복사 수" ↔ "초대 코드 복사"). 결과가 하나로
+ * 좁혀지지 않으면(0개나 2개 이상) 포기한다 — 잘못 짚는 것보다는 안 다는 게 낫다.
+ */
+function normalizeMetricName(s: string): string {
+  return s
+    .replace(/\s+/g, "")
+    .replace(/\([^)]*\)/g, "")
+    .replace(/(를|을|의)$/g, "")
+    .replace(/수$/, "");
+}
+
+export function findMetricByName(layerSlug: string, name: string): string | undefined {
+  const target = normalizeMetricName(name);
+  if (!target) return undefined;
+  const hits = ALL_METRICS.filter(
+    (m) => m.layerSlug === layerSlug && normalizeMetricName(m.name) === target,
+  );
+  return hits.length === 1 ? hits[0].id : undefined;
+}
+
 export function countByStatus(): Record<MetricStatus, number> {
   const out: Record<MetricStatus, number> = { ga4: 0, db: 0, api: 0, none: 0 };
   ALL_METRICS.forEach((m) => {

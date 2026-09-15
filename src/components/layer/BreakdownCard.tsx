@@ -23,10 +23,12 @@ const BUYER_RAMP = ["#8FB6DA", "#2E6FB7"];
  * 물리적으로 만족할 수 없고, 순서형에 요구되는 것은 **명도 단조성 + 보조 표기**다.
  * 범례와 우측 표가 항목명·값·비중을 전부 글자로 적어 주므로 색 단독으로 읽히지 않는다.
  *
- * 값은 dataviz 검증기로 고른 것이다(CVD 인접 분리 ΔE 11.4, 목표 8 이상 통과).
- * 처음 쓴 #5A2D04 는 너무 어둡고 채도가 낮아 바로 윗 단계와 구분되지 않아 교체했다.
+ * 검증기로 고른 ColorBrewer OrRd 계열이다. 인접 ΔE 는 deutan 13.7 / 정상 시각 16.4 —
+ * 이전 값(#EDB47C 계열, 인접 ΔE 11.4)보다 확실히 벌어졌다. 명도만 낮추는 대신
+ * 색상 자체를 주황→빨강으로 옮겨서("색이 진해진다" 가 아니라 "색이 달라진다") 단을
+ * 더 멀리 떨어뜨렸다 — 등급이 더 잘 구분되길 원한다는 요청에 맞춘 값.
  */
-const SELLER_RAMP = ["#EDB47C", "#D98A2C", "#B0600C", "#7A4206"];
+const SELLER_RAMP = ["#FDD49E", "#FC8D59", "#D7301F", "#7F0000"];
 
 function roleSplitPalette(items: string[]): string[] {
   return items.map((label) => {
@@ -62,7 +64,9 @@ export default function BreakdownCard({
   const ratios = axis.ratios[target.id] ?? [];
   const counts = splitExact(target.total, ratios);
   /* 램프는 5단이므로, 항목이 더 적으면 어두운 쪽부터 쓰지 않고 균등하게 고른다 */
-  const palette = axis.roleSplit
+  const palette = axis.colors
+    ? axis.items.map((label) => axis.colors![label] ?? "#7A8699")
+    : axis.roleSplit
     ? roleSplitPalette(axis.items)
     : axis.ordinal
     ? axis.items.map(

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import InfoTip from "@/components/InfoTip";
 import Sparkline from "@/components/charts/Sparkline";
 import { useSettings } from "@/lib/settings-context";
 import { evaluate, goalFootValue, missesTarget } from "@/lib/settings";
@@ -26,6 +27,7 @@ export default function Tiles({ tiles }: { tiles: Tile[] }) {
           <Link className="tile" key={t.idx} href={t.href}>
             <span className="t-title">
               {t.name}
+              <InfoTip metricId={t.metricId} />
               {/* 관점 필터가 안 먹는 지표는 그 사실을 말해 준다.
                   말 없이 전체 값을 보여주면 필터가 걸린 값으로 읽힌다 */}
               {t.lensNA && (

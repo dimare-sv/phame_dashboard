@@ -6,6 +6,7 @@
  * 그래서 레이어는 "지표 명세"만 쓰고, 기간 반영·단위·증감색은 전부 여기서 처리한다.
  */
 import { fmt, mmss } from "@/lib/format";
+import { findMetricByName } from "@/lib/metrics/dictionary";
 import { lensApplies, LENS_SCOPE_NOTE, type Lens, type LensScope } from "@/lib/segments";
 import type {
   Breakdown,
@@ -121,6 +122,14 @@ export interface MetricSpec {
   up?: boolean;
   /** 값 앞에 붙일 기호 — 순증감의 "+" */
   prefix?: string;
+  /**
+   * 특정 관점에서만 보여줄 서브 지표. "판매자 M1 리텐션" 을 구매 관점에서도
+   * 그대로 보여주면 필터와 화면이 다른 말을 한다 — 지정하지 않으면(undefined)
+   * 모든 관점에서 보인다.
+   */
+  lensOnly?: Exclude<Lens, "all">[];
+  /** 지표 사전의 id — 있으면 제목 옆 정보 아이콘이 정의·계산식을 띄운다 */
+  metricId?: string;
 }
 
 /**
@@ -235,6 +244,8 @@ export interface AxisSpec {
   ordinal?: boolean;
   /** 등급 축처럼 중간에 역할 경계가 있는 축 — 색을 두 계열로 나눈다 */
   roleSplit?: boolean;
+  /** 항목 라벨 → 고정 색. 가입방식처럼 실제 서비스 브랜드가 있는 축에 쓴다 */
+  colors?: Record<string, string>;
   caveats?: Record<string, string>;
 }
 
@@ -357,6 +368,7 @@ function buildBreakdown(spec: LayerSpec, p: PeriodKey, lens: Lens): Breakdown {
     deltas: a.d.map((d) => makeDelta(d, "count", a.up ?? true)),
     ordinal: a.ordinal,
     roleSplit: a.roleSplit,
+    colors: a.colors,
     caveats: a.caveats,
   }));
 
@@ -440,11 +452,18 @@ export function buildLayer(
 
   const mainSpec = lensMetric(spec.main, lens, spec.lens);
   const main = renderMetric(mainSpec, p);
-  const subs: SubTile[] = spec.subs.map((raw) => {
-    const m = lensMetric(raw, lens, spec.lens);
-    const r = renderMetric(m, p);
-    return { name: m.name, value: r.value, delta: r.delta };
-  });
+  const subs: SubTile[] = spec.subs
+    /* "판매자 M1 리텐션" 을 구매 관점에서도 그대로 보여주면 필터와 화면이
+       다른 말을 한다 — lensOnly 가 없으면 전체, 있으면 그 관점(+전체)에서만 */
+    .filter((raw) => !raw.lensOnly || lens === "all" || raw.lensOnly.includes(lens))
+    .map((raw) => {
+      const m = lensMetric(raw, lens, spec.lens);
+      const r = renderMetric(m, p);
+      /* 명시적으로 안 적어 둔 서브 지표는 같은 레이어 사전에서 이름으로 한 번 더 찾아본다.
+         모호하면(0개·2개 이상 일치) 정보 아이콘 없이 그냥 둔다. */
+      const metricId = raw.metricId ?? findMetricByName(spec.id, m.name);
+      return { name: m.name, value: r.value, delta: r.delta, metricId };
+    });
 
   const gran = GRAN[p];
   const k = spec.main.kind;
@@ -478,6 +497,7 @@ export function buildLayer(
       name: spec.define,
       value: main.value,
       delta: main.delta,
+      metricId: spec.metricId,
       footer: spec.footer.map((f) => ({
         k: f.k,
         v: f.fixed ?? (f.m ? renderMetric(lensMetric(f.m, lens, spec.lens), p).value : "—"),

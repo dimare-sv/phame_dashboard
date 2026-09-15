@@ -43,62 +43,73 @@ export default function Sparkline({ values, color, unit, decimals }: Props) {
   const path = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" L");
 
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      preserveAspectRatio="none"
-      role="img"
-      aria-label="최근 추이. 값은 호버로 확인하세요."
+    <span
+      className="spark-wrap"
       onMouseLeave={() => {
         setHover(null);
         hide();
       }}
     >
-      <path d={`M${path} L${W},${H} L0,${H} Z`} fill={color} opacity={0.08} />
-      <polyline
-        points={pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ")}
-        fill="none"
-        stroke={color}
-        strokeWidth={2.5}
-        vectorEffect="non-scaling-stroke"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" role="img" aria-label="최근 추이. 값은 호버로 확인하세요.">
+        <path d={`M${path} L${W},${H} L0,${H} Z`} fill={color} opacity={0.08} />
+        <polyline
+          points={pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ")}
+          fill="none"
+          stroke={color}
+          strokeWidth={2.5}
+          vectorEffect="non-scaling-stroke"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* 점 하나하나가 아니라 그 사이 구간 전체를 히트 영역으로 잡는다 — 점을 정확히 노려야만
+            반응하면 8개 안팎의 점으로는 쓰기 어렵다 */}
+        {values.map((v, i) => {
+          const bandStart = i === 0 ? 0 : (i - 0.5) * step;
+          const bandEnd = i === values.length - 1 ? W : (i + 0.5) * step;
+          const prev = i > 0 ? values[i - 1] : null;
+          const diff = prev ? (((v - prev) / prev) * 100).toFixed(1) : null;
+          return (
+            <rect
+              key={i}
+              x={bandStart}
+              y={0}
+              width={bandEnd - bandStart}
+              height={H}
+              fill="transparent"
+              onMouseMove={(ev) => {
+                setHover(i);
+                show(
+                  <>
+                    <div className="tv">{txt(v)}</div>
+                    {diff !== null && (
+                      <div className="tt" style={{ marginTop: 3 }}>
+                        직전 대비 {Number(diff) >= 0 ? "+" : ""}
+                        {diff}%
+                      </div>
+                    )}
+                  </>,
+                  ev,
+                );
+              }}
+            />
+          );
+        })}
+      </svg>
+      {/*
+        점을 SVG <circle> 로 그리면 preserveAspectRatio="none" 이 좌표계를 가로/세로
+        다른 비율로 늘리기 때문에 원이 타원으로 찌그러진다 — 실제로 그랬다.
+        그래서 점은 SVG 밖, 늘어나지 않는 HTML 요소로 %) 위치만 SVG 좌표에서 가져와 찍는다.
+      */}
       {hover !== null && (
-        <circle cx={pts[hover].x} cy={pts[hover].y} r={3.5} fill={color} stroke="var(--card)" strokeWidth={1.5} />
+        <i
+          className="spark-dot"
+          style={{
+            left: `${(pts[hover].x / W) * 100}%`,
+            top: `${(pts[hover].y / H) * 100}%`,
+            borderColor: color,
+          }}
+        />
       )}
-      {/* 점 하나하나가 아니라 그 사이 구간 전체를 히트 영역으로 잡는다 — 점을 정확히 노려야만
-          반응하면 8개 안팎의 점으로는 쓰기 어렵다 */}
-      {values.map((v, i) => {
-        const bandStart = i === 0 ? 0 : (i - 0.5) * step;
-        const bandEnd = i === values.length - 1 ? W : (i + 0.5) * step;
-        const prev = i > 0 ? values[i - 1] : null;
-        const diff = prev ? (((v - prev) / prev) * 100).toFixed(1) : null;
-        return (
-          <rect
-            key={i}
-            x={bandStart}
-            y={0}
-            width={bandEnd - bandStart}
-            height={H}
-            fill="transparent"
-            onMouseMove={(ev) => {
-              setHover(i);
-              show(
-                <>
-                  <div className="tv">{txt(v)}</div>
-                  {diff !== null && (
-                    <div className="tt" style={{ marginTop: 3 }}>
-                      직전 대비 {Number(diff) >= 0 ? "+" : ""}
-                      {diff}%
-                    </div>
-                  )}
-                </>,
-                ev,
-              );
-            }}
-          />
-        );
-      })}
-    </svg>
+    </span>
   );
 }
