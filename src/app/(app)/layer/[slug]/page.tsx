@@ -38,7 +38,8 @@ export default function LayerPage() {
   const m = data.main;
   const cmpText = `${data.period.range} · ${cmpLabel(data.period)} 대비`;
   const currentAxis = axisId ?? data.breakdown.axes[0].id;
-  const showExtra = data.extra && (!data.extra.showOnAxis || data.extra.showOnAxis === currentAxis);
+  /* 축에 묶인 표는 그 축을 보고 있을 때만 — 나머지는 항상 */
+  const extras = (data.extras ?? []).filter((e) => !e.showOnAxis || e.showOnAxis === currentAxis);
 
   return (
     <div className="canvas">
@@ -116,7 +117,9 @@ export default function LayerPage() {
         onAxisChange={setAxisId}
       />
 
-      {showExtra && data.extra && <ExtraTableCard table={data.extra} />}
+      {extras.map((t) => (
+        <ExtraTableCard key={t.title} table={t} />
+      ))}
     </div>
   );
 }

@@ -225,7 +225,8 @@ export interface ExtraSpec {
   head: string[];
   /** head[1..] 에 대응하는 열 정의. sum 을 안 주면 flow 인 열만 합계를 낸다 */
   cols: { kind: Kind; unit?: string; flow?: boolean; sum?: boolean }[];
-  rows: [string, ...number[]][];
+  /** null 은 **아직 측정할 수 없는 값**이다. 0 으로 쓰면 "없다" 로 읽히므로 구분한다 */
+  rows: [string, ...(number | null)[]][];
   /** 합계 행 — flow 열만 합산하고 나머지는 — 로 둔다 */
   total?: boolean;
   /** 이 열 값이 min 이상이면 경고색 */
@@ -307,7 +308,7 @@ export interface LayerSpec {
   subs: MetricSpec[];
   targets: TargetSpec[];
   axes: AxisSpec[];
-  extra?: ExtraSpec;
+  extras?: ExtraSpec[];
   /** 구매/판매 관점 지원 범위. 생략하면 역할과 무관한 지표로 본다 */
   lens?: LensSpec;
 }
@@ -354,10 +355,13 @@ function buildExtra(spec: ExtraSpec, p: PeriodKey): ExtraTable {
   const rows = spec.rows.map((r) => {
     const cells: Record<string, string> = { c0: String(r[0]) };
     spec.cols.forEach((c, i) => {
-      cells[`c${i + 1}`] = val(r[i + 1] as number, c);
+      const raw = r[i + 1] as number | null;
+      /* 측정 불가를 0 으로 찍으면 "실적이 없다" 로 읽힌다 */
+      cells[`c${i + 1}`] = raw === null ? "—" : val(raw, c);
     });
+    const hotCell = spec.hot ? (r[spec.hot.col + 1] as number | null) : null;
     const hot =
-      spec.hot && (r[spec.hot.col + 1] as number) >= spec.hot.min
+      spec.hot && hotCell !== null && hotCell >= spec.hot.min
         ? [`c${spec.hot.col + 1}`]
         : undefined;
     return { cells, hot };
@@ -365,8 +369,11 @@ function buildExtra(spec: ExtraSpec, p: PeriodKey): ExtraTable {
 
   /* 합계를 내도 되는 열인지 — 비율·소요시간은 더하면 안 된다 */
   const summable = spec.cols.map((c) => c.sum ?? c.flow ?? false);
+  /* 측정 불가(null)는 합계에서 뺀다 — 0 으로 더하면 합계가 작아진 것처럼 보인다 */
   const sums = spec.cols.map((c, i) =>
-    summable[i] ? spec.rows.reduce((a, r) => a + (r[i + 1] as number), 0) : NaN,
+    summable[i]
+      ? spec.rows.reduce((a, r) => a + ((r[i + 1] as number | null) ?? 0), 0)
+      : NaN,
   );
 
   let total: Record<string, string> | undefined;
@@ -480,6 +487,6 @@ export function buildLayer(
     lensScope: scope,
     lensNote,
     breakdown: buildBreakdown(spec, p, lens),
-    extra: spec.extra ? buildExtra(spec.extra, p) : undefined,
+    extras: spec.extras?.map((e) => buildExtra(e, p)),
   };
 }

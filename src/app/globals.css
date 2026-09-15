@@ -1190,8 +1190,10 @@ table.cohort td.lead span {
 
 /* ---------- L1 : 서브 지표 ---------- */
 .subtiles {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  /* 그리드로 열을 고정하면 지표 개수가 열 수의 배수가 아닐 때 마지막 줄에
+     회색 빈 칸이 남는다. flex 로 두면 마지막 줄 항목이 늘어나 빈 칸이 안 생긴다. */
+  display: flex;
+  flex-wrap: wrap;
   gap: 1px;
   background: var(--line);
   border: 1px solid var(--line);
@@ -1199,17 +1201,8 @@ table.cohort td.lead span {
   overflow: hidden;
   box-shadow: var(--shadow);
 }
-@media (max-width: 1180px) {
-  .subtiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (max-width: 600px) {
-  .subtiles {
-    grid-template-columns: 1fr;
-  }
-}
 .subtile {
+  flex: 1 1 190px;
   background: var(--card);
   padding: 14px 16px;
   display: flex;

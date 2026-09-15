@@ -264,7 +264,8 @@ export interface LayerData {
   };
   subs: SubTile[];
   breakdown: Breakdown;
-  extra?: ExtraTable;
+  /** 레이어 고유 표. 여러 개를 둘 수 있다 — showOnAxis 로 축에 묶인 표는 그 축일 때만 나온다 */
+  extras?: ExtraTable[];
 }
 
 /** 어댑터가 구현해야 하는 계약. mock / ga4 / db 가 이걸 각각 구현한다. */
