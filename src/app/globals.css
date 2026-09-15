@@ -2033,22 +2033,28 @@ main {
   background: var(--ground);
 }
 .app[data-lens="demand"] {
-  /* 기본 바탕(#eff3f8) 자체가 푸른기 있는 회색이라, 파랑을 얹는 정도로는 구분이 안 된다.
-     채도를 확실히 올려야 "전체 / 구매" 가 갈린다. */
-  --ground: #c9dcf5;
+  /* 기본 바탕(#eff3f8) 자체가 푸른기 있는 회색이라 아주 옅게 얹으면 구분이 안 되고,
+     너무 올리면 카드가 떠 보인다. 그 사이 값. */
+  --ground: #d3e2f6;
   --lens-edge: var(--navy);
 }
 .app[data-lens="supply"] {
-  --ground: #f7e6c9;
+  --ground: #f8ebd6;
   --lens-edge: #b0600c;
 }
-.app[data-lens="demand"] .lens-note-on {
-  background: #b7cded;
-  border-left-color: var(--lens-edge);
-}
+/* 관점 안내 바는 **두 관점 모두 같은 빨강**이다.
+   바탕색이 이미 어느 관점인지 말해 주므로, 이 바까지 관점 색을 따라가면
+   화면 전체가 한 색으로 덮여 "지금 필터가 걸려 있다" 는 사실이 묻힌다.
+   색이 아니라 굵은 글씨로 관점 이름을 읽게 한다. */
+.app[data-lens="demand"] .lens-note-on,
 .app[data-lens="supply"] .lens-note-on {
-  background: #efd8ad;
-  border-left-color: var(--lens-edge);
+  background: #fae3e5;
+  border-left-color: var(--crit);
+  color: #7d1f29;
+}
+.app[data-lens="demand"] .lens-note-on b,
+.app[data-lens="supply"] .lens-note-on b {
+  color: var(--crit);
 }
 /* 관점을 고르면 상단 필터 자신에도 같은 색을 얹어, 바탕색의 출처를 분명히 한다 */
 .app[data-lens="demand"] .sel[aria-label="구매·판매 관점"],
