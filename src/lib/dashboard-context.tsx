@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { CompareMode, PeriodKey } from "@/lib/data/types";
-import { isLens, type Lens } from "@/lib/segments";
+import { isLens, type Lens, type LensScope } from "@/lib/segments";
 
 /**
  * 기간·비교기준은 대시보드 전역 상태다.
@@ -24,6 +24,13 @@ interface DashboardState {
   /** 구매/판매 관점. 세그먼트가 아니라 렌즈다 — 둘을 더해도 전체가 아니다 */
   lens: Lens;
   setLens: (l: Lens) => void;
+  /**
+   * 지금 보고 있는 화면이 지원하는 관점 범위.
+   * 화면이 알려 주고 상단 필터가 읽는다 — 이 값이 없으면 필터는 고를 수 없는
+   * 관점을 열어 두고, 고르는 순간 되돌려 놓는 이상한 동작을 하게 된다.
+   */
+  lensScope: LensScope;
+  setLensScope: (s: LensScope) => void;
   /** 전역 필터에 맞춘 비교 라벨을 만들어 준다 */
   cmpLabel: (meta: { cmp: string; cmpYoy: string }) => string;
 }
@@ -36,6 +43,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [period, setPeriod] = useState<PeriodKey>("d7");
   const [compare, setCompare] = useState<CompareMode>("prev");
   const [lens, setLens] = useState<Lens>("all");
+  /* 관점 범위는 화면을 옮길 때마다 새로 정해지므로 저장하지 않는다 */
+  const [lensScope, setLensScope] = useState<LensScope>("both");
 
   /* 새로고침해도 보던 기간이 유지되도록 — 브라우저 한정, 서버로 나가지 않는다 */
   useEffect(() => {
@@ -69,8 +78,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<DashboardState>(
-    () => ({ period, setPeriod, compare, setCompare, lens, setLens, cmpLabel }),
-    [period, compare, lens, cmpLabel],
+    () => ({ period, setPeriod, compare, setCompare, lens, setLens, lensScope, setLensScope, cmpLabel }),
+    [period, compare, lens, lensScope, cmpLabel],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Band from "@/components/Band";
 import Card from "@/components/Card";
 import Stub from "@/components/Stub";
@@ -10,7 +10,7 @@ import BreakdownCard from "@/components/layer/BreakdownCard";
 import ExtraTableCard from "@/components/layer/ExtraTableCard";
 import { useDashboard } from "@/lib/dashboard-context";
 import { useDashboardData } from "@/lib/use-dashboard-data";
-import { LENS_HINT, LENS_LABEL } from "@/lib/segments";
+import { LENS_HINT, LENS_LABEL, euro, lensApplies, lensFor, type Lens } from "@/lib/segments";
 import type { LayerData } from "@/lib/data/types";
 
 /**
@@ -21,9 +21,36 @@ import type { LayerData } from "@/lib/data/types";
  */
 export default function LayerPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { period, lens, cmpLabel } = useDashboard();
+  const { period, lens, setLens, setLensScope, cmpLabel } = useDashboard();
   const { data, error, loading } = useDashboardData<LayerData>(`layer/${slug}`, period, lens);
   const [axisId, setAxisId] = useState<string | null>(null);
+  /** 자동 전환이 일어났을 때의 직전 관점 — 왜 바뀌었는지 말해 주기 위한 것 */
+  const [autoFrom, setAutoFrom] = useState<Lens | null>(null);
+
+  /* 탭을 옮기면 이전 탭의 전환 안내는 더 이상 맞는 말이 아니다 */
+  useEffect(() => {
+    setAutoFrom(null);
+  }, [slug]);
+
+  /**
+   * 이 레이어에서 성립하지 않는 관점이면 성립하는 쪽으로 바꾼다.
+   *
+   * 그냥 두면 필터에는 "판매 관점" 이라 적혀 있는데 화면의 숫자는 구매 데이터인
+   * 상태가 된다 — 필터가 화면과 다른 말을 하는 것이라 안내 문구로 덮을 문제가 아니다.
+   */
+  /* 상단 필터가 고를 수 있는 관점을 알 수 있도록 이 레이어의 범위를 올려 보낸다 */
+  useEffect(() => {
+    if (data) setLensScope(data.lensScope);
+  }, [data, setLensScope]);
+
+  useEffect(() => {
+    if (!data) return;
+    if (lensApplies(data.lensScope, lens)) return;
+    const target = lensFor(data.lensScope);
+    if (target === lens) return;
+    setAutoFrom(lens);
+    setLens(target);
+  }, [data, lens, setLens]);
 
   /* 아직 정의하지 않은 레이어(지표 사전·설정 등)는 준비 중 화면으로 */
   if (error) return <Stub />;
@@ -43,17 +70,24 @@ export default function LayerPage() {
 
   return (
     <div className="canvas">
-      {/* 관점을 골랐는데 이 레이어가 그 관점으로 안 나뉘면, 조용히 전체 값을
-          보여주는 대신 왜 그런지 말한다 — 안 그러면 필터가 걸린 줄 알고 읽는다 */}
-      {data.lensNote && (
+      {/* 관점이 바뀌었으면 왜 바뀌었는지 먼저 말한다 — 말없이 바뀌면 고장으로 읽힌다 */}
+      {autoFrom ? (
+        <p className="lens-note lens-note-auto">
+          <b>{LENS_LABEL[autoFrom]}</b>
+          {euro(LENS_LABEL[autoFrom])}는 나뉘지 않는 지표라 <b>{LENS_LABEL[lens]}</b>
+          {euro(LENS_LABEL[lens])} 바꿨습니다.
+        </p>
+      ) : data.lensNote ? (
         <p className="lens-note">
           <b>{LENS_LABEL[lens]}</b> — {data.lensNote}
         </p>
-      )}
-      {!data.lensNote && lens !== "all" && (
-        <p className="lens-note lens-note-on">
-          <b>{LENS_LABEL[lens]}</b>으로 좁혀 보고 있습니다. {LENS_HINT[lens]}
-        </p>
+      ) : (
+        lens !== "all" && (
+          <p className="lens-note lens-note-on">
+            <b>{LENS_LABEL[lens]}</b>
+            {euro(LENS_LABEL[lens])} 좁혀 보고 있습니다. {LENS_HINT[lens]}
+          </p>
+        )
       )}
       <Band label="메인 지표" hint={cmpText} />
       <div className="r-hero">

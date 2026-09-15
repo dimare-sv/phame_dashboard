@@ -2069,3 +2069,11 @@ main {
   color: var(--lens-edge);
   font-weight: 600;
 }
+/* 관점이 자동으로 바뀐 경우 — 정보성 안내라 경고색을 쓰지 않는다 */
+.lens-note-auto {
+  background: #f0f5fd;
+  border-left-color: var(--navy);
+}
+.lens-note-auto b {
+  color: var(--navy);
+}

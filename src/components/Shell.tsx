@@ -7,7 +7,7 @@ import { useDashboard } from "@/lib/dashboard-context";
 import { captureElement } from "@/lib/capture";
 import { NAV_LAYERS, NAV_MAIN, NAV_REF, titleFor, type NavItem } from "@/lib/nav";
 import type { PeriodKey } from "@/lib/data/types";
-import { LENSES, LENS_HINT, LENS_LABEL } from "@/lib/segments";
+import { LENSES, LENS_HINT, LENS_LABEL, LENS_SCOPE_NOTE, lensApplies } from "@/lib/segments";
 
 const PERIOD_TABS: { key: PeriodKey; label: string }[] = [
   { key: "d1", label: "어제" },
@@ -39,7 +39,7 @@ interface ShellProps {
 
 export default function Shell({ children, user, signOut }: ShellProps) {
   const pathname = usePathname();
-  const { period, setPeriod, compare, setCompare, lens, setLens } = useDashboard();
+  const { period, setPeriod, compare, setCompare, lens, setLens, lensScope } = useDashboard();
   const [saving, setSaving] = useState(false);
   const title = titleFor(pathname);
   /* 참조 화면(지표 사전·설정)은 기간과 무관하다 — 쓸 수 없는 필터를 띄워두지 않는다 */
@@ -173,14 +173,24 @@ export default function Shell({ children, user, signOut }: ShellProps) {
                     className="sel"
                     aria-label="구매·판매 관점"
                     value={lens}
-                    title={LENS_HINT[lens]}
+                    title={
+                      lensScope === "both"
+                        ? LENS_HINT[lens]
+                        : LENS_SCOPE_NOTE[lensScope]
+                    }
                     onChange={(e) => setLens(e.target.value as typeof lens)}
                   >
-                    {LENSES.map((l) => (
-                      <option key={l} value={l}>
-                        {LENS_LABEL[l]}
-                      </option>
-                    ))}
+                    {LENSES.map((l) => {
+                      /* 이 화면에서 성립하지 않는 관점은 아예 고를 수 없게 한다.
+                         고를 수 있게 두고 되돌리면 필터가 고장난 것처럼 보인다 */
+                      const ok = lensApplies(lensScope, l);
+                      return (
+                        <option key={l} value={l} disabled={!ok}>
+                          {LENS_LABEL[l]}
+                          {ok ? "" : " (해당 없음)"}
+                        </option>
+                      );
+                    })}
                   </select>
                 </>
               )}

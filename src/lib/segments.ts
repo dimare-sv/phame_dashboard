@@ -84,6 +84,31 @@ export const LENS_SCOPE_NOTE: Record<Exclude<LensScope, "both">, string> = {
   none: "역할과 무관한 지표입니다. 관점 필터가 적용되지 않습니다.",
 };
 
+/**
+ * 이 레이어에서 성립하는 관점.
+ *
+ * 구매 전용 레이어를 판매 관점으로 열어 두면, 필터에는 "판매 관점" 이라 적혀 있는데
+ * 화면의 숫자는 구매 데이터다. 필터가 화면과 다른 말을 하는 상태라 자동으로 맞춘다.
+ */
+export function lensFor(scope: LensScope): Lens {
+  if (scope === "demand") return "demand";
+  if (scope === "supply") return "supply";
+  /* both 는 어느 쪽이든 되므로 호출부에서 걸러지고, none 은 나눌 수 없으니 전체 */
+  return "all";
+}
+
+/**
+ * 받침에 맞는 조사를 고른다 — "전체으로" 가 아니라 "전체로".
+ * 관점 이름이 늘어나면 손으로 맞추기 어려우므로 계산한다.
+ */
+export function euro(word: string): "로" | "으로" {
+  const code = word.charCodeAt(word.length - 1);
+  if (code < 0xac00 || code > 0xd7a3) return "로";
+  const jong = (code - 0xac00) % 28;
+  /* 받침이 없거나(0) ㄹ 받침(8)이면 "로" */
+  return jong === 0 || jong === 8 ? "로" : "으로";
+}
+
 /** 이 레이어에서 그 관점이 의미가 있는가 */
 export function lensApplies(scope: LensScope, lens: Lens): boolean {
   if (lens === "all") return true;

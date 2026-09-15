@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Band from "@/components/Band";
 import Card from "@/components/Card";
 import WauTrendChart from "@/components/charts/WauTrendChart";
@@ -14,8 +15,14 @@ import { useDashboardData } from "@/lib/use-dashboard-data";
 import type { OverviewData } from "@/lib/data/types";
 
 export default function OverviewPage() {
-  const { period, lens, cmpLabel } = useDashboard();
+  const { period, lens, setLensScope, cmpLabel } = useDashboard();
   const { data, error, loading } = useDashboardData<OverviewData>("overview", period, lens);
+
+  /* 개요는 8개 레이어를 모두 담으므로 어떤 관점이든 성립한다.
+     레이어에서 좁혀진 범위를 여기서 풀어 주지 않으면 필터가 잠긴 채로 남는다 */
+  useEffect(() => {
+    setLensScope("both");
+  }, [setLensScope]);
 
   if (error) return <div className="canvas"><p className="state err">{error}</p></div>;
   if (loading || !data) return <div className="canvas"><p className="state">불러오는 중…</p></div>;
