@@ -123,6 +123,28 @@ export interface MetricSpec {
   prefix?: string;
 }
 
+/**
+ * 추이·스파크라인의 축 단위를 지표 종류에서 계산한다.
+ * 레이어 추이(12점)와 개요 타일 스파크(8점)가 같은 규칙을 써야
+ * 같은 지표를 다른 단위로 보여주는 일이 없다.
+ */
+export function trendFormat(kind: Kind, unit?: string): { unit: string; decimals: number } {
+  const u =
+    kind === "count"
+      ? (unit ?? "명")
+      : kind === "rate" || kind === "rate2"
+        ? "%"
+        : kind === "min"
+          ? "분"
+          : kind === "eok"
+            ? "억"
+            : kind === "manwon"
+              ? "만원"
+              : "";
+  const decimals = kind === "count" || kind === "manwon" || kind === "min" ? 0 : kind === "rate2" ? 2 : 1;
+  return { unit: u, decimals };
+}
+
 export function metricValue(m: MetricSpec, p: PeriodKey): number {
   if (m.vp) return m.vp[P_INDEX[p]];
   return m.flow ? m.v * SCALE[p] : m.v;
@@ -426,20 +448,7 @@ export function buildLayer(
 
   const gran = GRAN[p];
   const k = spec.main.kind;
-  /* 추이 축 라벨도 메인 지표와 같은 단위로 읽혀야 한다 */
-  const trendUnit =
-    k === "count"
-      ? (spec.main.unit ?? "명")
-      : k === "rate" || k === "rate2"
-        ? "%"
-        : k === "min"
-          ? "분"
-          : k === "eok"
-            ? "억"
-            : k === "manwon"
-              ? "만원"
-              : "";
-  const trendDec = k === "count" || k === "manwon" || k === "min" ? 0 : k === "rate2" ? 2 : 1;
+  const { unit: trendUnit, decimals: trendDec } = trendFormat(k, spec.main.unit);
 
   const capped = k === "rate" || k === "rate2";
   const series = makeSeries(metricValue(mainSpec, p), relativeDelta(mainSpec, p), spec.id + p + lens, 12, capped);

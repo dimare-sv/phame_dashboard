@@ -6,7 +6,7 @@
  */
 import type { OverviewData, PeriodKey, PlatformData, Tile } from "../../types";
 import { LAYER_SPECS } from "./layer-specs";
-import { PERIODS, lensMetric, makeSeries, metricValue, relativeDelta, renderMetric } from "./build";
+import { PERIODS, lensMetric, makeSeries, metricValue, relativeDelta, renderMetric, trendFormat } from "./build";
 import { lensApplies, type Lens } from "@/lib/segments";
 
 const P_INDEX: Record<PeriodKey, 0 | 1 | 2> = { d1: 0, d7: 1, d28: 2 };
@@ -154,11 +154,14 @@ function buildTiles(period: PeriodKey, lens: Lens): Tile[] {
     /* 타일도 레이어와 같은 관점으로 좁힌다 — 개요와 탭의 숫자가 갈리면 안 된다 */
     const main = lensMetric(spec.main, lens, spec.lens);
     const r = renderMetric(main, period);
+    const { unit: sparkUnit, decimals: sparkDecimals } = trendFormat(main.kind, main.unit);
     return {
       idx: spec.idx,
       name: spec.eyebrow,
       value: r.value,
       delta: r.delta,
+      sparkUnit,
+      sparkDecimals,
       spark: makeSeries(
         metricValue(main, period),
         relativeDelta(main, period),

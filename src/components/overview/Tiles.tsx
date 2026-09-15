@@ -25,7 +25,6 @@ export default function Tiles({ tiles }: { tiles: Tile[] }) {
         return (
           <Link className="tile" key={t.idx} href={t.href}>
             <span className="t-title">
-              <i>{t.idx}</i>
               {t.name}
               {/* 관점 필터가 안 먹는 지표는 그 사실을 말해 준다.
                   말 없이 전체 값을 보여주면 필터가 걸린 값으로 읽힌다 */}
@@ -46,7 +45,7 @@ export default function Tiles({ tiles }: { tiles: Tile[] }) {
               <span className={`delta ${t.delta.good ? "d-good" : "d-bad"}`}>{t.delta.text}</span>
             </span>
             <span className="t-spark">
-              <Sparkline values={t.spark} color={color} />
+              <Sparkline values={t.spark} color={color} unit={t.sparkUnit} decimals={t.sparkDecimals} />
             </span>
             {goal && (
               <span className="t-foot">

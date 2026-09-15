@@ -52,6 +52,9 @@ export interface Tile {
   delta: Delta;
   /** 스파크라인 원본 값 (정규화는 렌더러가 한다) */
   spark: number[];
+  /** 스파크라인 호버 시 각 점을 이 단위·자릿수로 읽는다 — 메인 지표와 같은 규칙이어야 한다 */
+  sparkUnit: string;
+  sparkDecimals: number;
   /** 이 타일이 대표하는 레이어 탭 */
   href: string;
   /** 지표 사전의 id — 목표·임계를 찾아오는 열쇠 */
