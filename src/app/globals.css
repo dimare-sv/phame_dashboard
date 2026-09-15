@@ -6,7 +6,7 @@
 :root {
   color-scheme: light;
 
-  --ground: #eff3f8;
+  --ground: #f4f5f7;
   --card: #ffffff;
   --card-2: #f7fafd;
   --rail: #ffffff;
@@ -85,31 +85,31 @@ body {
 }
 
 /* ========== 더미 데이터 고지 ========== */
-/* 연한 배경이면 관점 바탕색(특히 판매=주황 계열)에 묻힌다.
-   "이 숫자는 전부 가짜" 는 어떤 관점에서도 가장 먼저 읽혀야 하므로 진한 바로 둔다. */
+/* 바탕이 거의 흰색이라 옅은 앰버로도 충분히 읽힌다.
+   진한 바로 두면 화면을 열 때마다 이 띠가 가장 무겁게 보인다. */
 .notice {
-  background: #8a4b05;
-  color: #fdf3e6;
+  background: #fff6e3;
+  color: #8a4b05;
   font-size: 13px;
   font-weight: 500;
   padding: 9px 22px;
   display: flex;
   gap: 10px;
   align-items: center;
-  border-bottom: 1px solid #6d3a03;
+  border-bottom: 1px solid #f0dcb4;
 }
 .notice .tag {
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  background: #fdf3e6;
-  color: #8a4b05;
+  background: #a25807;
+  color: #fff;
   padding: 2px 9px;
   border-radius: 3px;
   flex-shrink: 0;
 }
 .notice b {
-  color: #fff;
+  color: #6d3a03;
 }
 .notice b {
   font-weight: 700;
@@ -2032,14 +2032,20 @@ table.goal tr:last-child td {
 main {
   background: var(--ground);
 }
+/**
+ * 바탕은 거의 흰색에 가깝게 둔다.
+ *
+ * 진한 바탕은 그 자체가 정보인 척하면서 정작 읽어야 할 숫자와 경쟁한다.
+ * 기본 바탕에서 푸른기를 빼 중립 회색으로 만들었기 때문에,
+ * 이 정도의 옅은 틴트만으로도 "전체 / 구매 / 판매" 가 갈린다.
+ * 관점을 실제로 알려주는 것은 바탕이 아니라 안내 바와 상단 필터다.
+ */
 .app[data-lens="demand"] {
-  /* 기본 바탕(#eff3f8) 자체가 푸른기 있는 회색이라 아주 옅게 얹으면 구분이 안 되고,
-     너무 올리면 카드가 떠 보인다. 그 사이 값. */
-  --ground: #d3e2f6;
+  --ground: #f0f5fd;
   --lens-edge: var(--navy);
 }
 .app[data-lens="supply"] {
-  --ground: #f8ebd6;
+  --ground: #fdf8f0;
   --lens-edge: #b0600c;
 }
 /* 관점 안내 바는 **두 관점 모두 같은 빨강**이다.
@@ -2048,9 +2054,9 @@ main {
    색이 아니라 굵은 글씨로 관점 이름을 읽게 한다. */
 .app[data-lens="demand"] .lens-note-on,
 .app[data-lens="supply"] .lens-note-on {
-  background: #fae3e5;
+  background: #fdf1f2;
   border-left-color: var(--crit);
-  color: #7d1f29;
+  color: #8d2630;
 }
 .app[data-lens="demand"] .lens-note-on b,
 .app[data-lens="supply"] .lens-note-on b {
