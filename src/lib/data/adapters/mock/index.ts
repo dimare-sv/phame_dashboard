@@ -5,6 +5,7 @@
  * (DATA_SOURCE=mock)
  */
 import type { DashboardSource, LayerData, PeriodKey } from "../../types";
+import type { Lens } from "@/lib/segments";
 import { buildLayer } from "./build";
 import { LAYER_SPECS } from "./layer-specs";
 import { buildOverview } from "./overview";
@@ -14,12 +15,12 @@ const AS_OF = "2026-09-13 06:00";
 export const mockSource: DashboardSource = {
   name: "mock",
 
-  async getOverview(period: PeriodKey) {
-    return buildOverview(period, AS_OF);
+  async getOverview(period: PeriodKey, lens: Lens) {
+    return buildOverview(period, AS_OF, lens);
   },
 
-  async getLayer(layerId: string, period: PeriodKey): Promise<LayerData | null> {
+  async getLayer(layerId: string, period: PeriodKey, lens: Lens): Promise<LayerData | null> {
     const spec = LAYER_SPECS.find((s) => s.id === layerId);
-    return spec ? buildLayer(spec, period, AS_OF) : null;
+    return spec ? buildLayer(spec, period, AS_OF, lens) : null;
   },
 };

@@ -27,6 +27,13 @@ export default function Tiles({ tiles }: { tiles: Tile[] }) {
             <span className="t-title">
               <i>{t.idx}</i>
               {t.name}
+              {/* 관점 필터가 안 먹는 지표는 그 사실을 말해 준다.
+                  말 없이 전체 값을 보여주면 필터가 걸린 값으로 읽힌다 */}
+              {t.lensNA && (
+                <span className="t-na" title="이 지표는 구매·판매로 나뉘지 않아 전체 값입니다">
+                  전체
+                </span>
+              )}
               {sev !== "ok" && (
                 <i
                   className={`flag f-${sev}`}

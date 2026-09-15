@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { CompareMode, PeriodKey } from "@/lib/data/types";
+import { isLens, type Lens } from "@/lib/segments";
 
 /**
  * 기간·비교기준은 대시보드 전역 상태다.
@@ -20,6 +21,9 @@ interface DashboardState {
   setPeriod: (p: PeriodKey) => void;
   compare: CompareMode;
   setCompare: (c: CompareMode) => void;
+  /** 구매/판매 관점. 세그먼트가 아니라 렌즈다 — 둘을 더해도 전체가 아니다 */
+  lens: Lens;
+  setLens: (l: Lens) => void;
   /** 전역 필터에 맞춘 비교 라벨을 만들어 준다 */
   cmpLabel: (meta: { cmp: string; cmpYoy: string }) => string;
 }
@@ -31,15 +35,21 @@ const STORE_KEY = "pharme.dashboard.filter";
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [period, setPeriod] = useState<PeriodKey>("d7");
   const [compare, setCompare] = useState<CompareMode>("prev");
+  const [lens, setLens] = useState<Lens>("all");
 
   /* 새로고침해도 보던 기간이 유지되도록 — 브라우저 한정, 서버로 나가지 않는다 */
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORE_KEY);
       if (!raw) return;
-      const saved = JSON.parse(raw) as Partial<{ period: PeriodKey; compare: CompareMode }>;
+      const saved = JSON.parse(raw) as Partial<{
+        period: PeriodKey;
+        compare: CompareMode;
+        lens: string;
+      }>;
       if (saved.period) setPeriod(saved.period);
       if (saved.compare) setCompare(saved.compare);
+      if (saved.lens && isLens(saved.lens)) setLens(saved.lens);
     } catch {
       /* 저장소를 못 읽어도 기본값으로 동작해야 한다 */
     }
@@ -47,11 +57,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(STORE_KEY, JSON.stringify({ period, compare }));
+      window.localStorage.setItem(STORE_KEY, JSON.stringify({ period, compare, lens }));
     } catch {
       /* 시크릿 모드 등 — 무시 */
     }
-  }, [period, compare]);
+  }, [period, compare, lens]);
 
   const cmpLabel = useCallback(
     (meta: { cmp: string; cmpYoy: string }) => (compare === "yoy" ? meta.cmpYoy : meta.cmp),
@@ -59,8 +69,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<DashboardState>(
-    () => ({ period, setPeriod, compare, setCompare, cmpLabel }),
-    [period, compare, cmpLabel],
+    () => ({ period, setPeriod, compare, setCompare, lens, setLens, cmpLabel }),
+    [period, compare, lens, cmpLabel],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

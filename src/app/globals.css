@@ -2032,3 +2032,34 @@ table.goal tr:last-child td {
     transition: none !important;
   }
 }
+
+/* ── 관점(구매/판매) 안내 ─────────────────────────────────────
+   필터를 걸었는데 화면이 안 바뀌면 고장으로 읽힌다.
+   적용됐으면 적용됐다고, 안 되면 왜 안 되는지 항상 말해 준다. */
+.lens-note {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 3px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ink-2);
+  background: var(--card-2);
+  border-left: 3px solid var(--line);
+}
+.lens-note b {
+  color: var(--ink);
+}
+.lens-note-on {
+  background: #eef4fb;
+  border-left-color: var(--navy);
+}
+.t-na {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  background: var(--card-2);
+  border: 1px solid var(--line-soft);
+}

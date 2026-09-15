@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { PeriodKey } from "@/lib/data/types";
+import type { Lens } from "@/lib/segments";
 
 /**
  * 기간별로 한 번만 받아 두고 재사용한다.
@@ -15,8 +16,13 @@ export interface Loadable<T> {
   loading: boolean;
 }
 
-export function useDashboardData<T>(endpoint: string, period: PeriodKey): Loadable<T> {
-  const key = `${endpoint}:${period}`;
+export function useDashboardData<T>(
+  endpoint: string,
+  period: PeriodKey,
+  lens: Lens = "all",
+): Loadable<T> {
+  /* 캐시 키에 관점이 빠지면 구매 관점 화면에 전체 값이 그대로 남는다 */
+  const key = `${endpoint}:${period}:${lens}`;
   const cached = cache.get(key) as T | undefined;
 
   const [data, setData] = useState<T | null>(cached ?? null);
@@ -36,7 +42,7 @@ export function useDashboardData<T>(endpoint: string, period: PeriodKey): Loadab
     setLoading(true);
     setError(null);
 
-    fetch(`/api/${endpoint}?period=${period}`)
+    fetch(`/api/${endpoint}?period=${period}&lens=${lens}`)
       .then(async (res) => {
         /* 세션이 만료되면 조용히 실패하지 말고 로그인 화면으로 보낸다 */
         if (res.status === 401) {
@@ -61,7 +67,7 @@ export function useDashboardData<T>(endpoint: string, period: PeriodKey): Loadab
     return () => {
       alive = false;
     };
-  }, [key, endpoint, period]);
+  }, [key, endpoint, period, lens]);
 
   return { data, error, loading };
 }

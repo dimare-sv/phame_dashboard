@@ -5,6 +5,7 @@
  * **구조는 그대로 쓴다** — 레이어마다 무엇을 메인으로 두고 어떤 축으로 쪼갤지가
  * 이 파일의 실제 내용이고, 그건 데이터 출처가 바뀌어도 변하지 않는다.
  */
+import { MEMBER_GRADE_LABELS, SELLER_GRADE_LABELS } from "@/lib/segments";
 import type { LayerSpec } from "./build";
 
 const STOCK_CAVEAT =
@@ -25,6 +26,8 @@ export const LAYER_SPECS: LayerSpec[] = [
   /* ================================ 01 획득 ================================ */
   {
     id: "acq",
+    /* 구매자 가입과 판매자 전환을 나눠 본다 */
+    lens: { scope: "both", volume: { demand: 0.93, supply: 0.07 }, rate: { demand: 1.02, supply: 0.61 } },
     idx: "01",
     title: "획득",
     eyebrow: "신규 가입자",
@@ -34,7 +37,12 @@ export const LAYER_SPECS: LayerSpec[] = [
     mainDecimals: 0,
     main: { name: "신규 가입자", kind: "count", unit: "명", v: 1204, flow: true, d: [12.4, 9.8, 14.2] },
     footer: [
-      { k: "누적 회원", fixed: "24,180명" },
+      /* 기준일 잔액이라 기간에는 안 움직이지만 **관점에는 반응해야 한다**.
+         문자열로 박아두면 판매 관점에서 신규 가입자만 줄고 누적 회원은 전체로 남는다. */
+      {
+        k: "누적 회원",
+        m: { name: "누적 회원", kind: "count", unit: "명", v: 24180, d: [0, 0, 0] },
+      },
       {
         k: "순 증감",
         m: { name: "순 증감", kind: "count", unit: "명", v: 1061, flow: true, d: [11.8, 9.2, 13.6], prefix: "+" },
@@ -86,13 +94,15 @@ export const LAYER_SPECS: LayerSpec[] = [
       {
         id: "grade",
         label: "등급",
-        items: ["파머", "파머셀러", "프리마스터", "마스터", "파매니악"],
+        /* 파머(구매자) → 파머셀러(판매자) 에서 **역할이 바뀐다**.
+           하나의 순서형 램프로 칠하면 이 경계가 지워지므로 ordinal 을 쓰지 않는다. */
+        items: MEMBER_GRADE_LABELS,
         ratios: {
           signup: [0.98, 0.02, 0, 0, 0],
           member: [0.8024, 0.1315, 0.0405, 0.0221, 0.0035],
         },
         d: [9.2, 8.4, 3.1, 1.2, 12.0],
-        ordinal: true,
+        roleSplit: true,
       },
     ],
     extra: {
@@ -125,6 +135,8 @@ export const LAYER_SPECS: LayerSpec[] = [
   /* ================================ 02 활성 ================================ */
   {
     id: "active",
+    /* 판매 관점은 판매자센터·미니샵 관리 활동 기준 */
+    lens: { scope: "both", volume: { demand: 0.88, supply: 0.19 }, rate: { demand: 0.97, supply: 1.24 } },
     idx: "02",
     title: "활성",
     eyebrow: "기능 활성률",
@@ -215,6 +227,8 @@ export const LAYER_SPECS: LayerSpec[] = [
   /* ================================ 03 전환 ================================ */
   {
     id: "convert",
+    /* 구매 행동 자체를 세는 레이어라 판매 관점이 성립하지 않는다 */
+    lens: { scope: "demand" },
     idx: "03",
     title: "전환",
     eyebrow: "구매 전환율",
@@ -277,6 +291,22 @@ export const LAYER_SPECS: LayerSpec[] = [
         ordinal: true,
       },
       {
+        id: "buyer",
+        label: "구매자 유형",
+        /* 비회원도 게스트로 주문할 수 있고, 판매자(파머셀러 이상)도 구매한다.
+           그래서 이 축은 등급 축과 별개다 — "누가 샀나" 를 회원 여부까지 포함해 본다. */
+        items: ["파머", "비회원", "판매자 겸업"],
+        ratios: {
+          order: [0.612, 0.243, 0.145],
+          attempt: [0.604, 0.257, 0.139],
+        },
+        d: [4.2, 11.8, 6.4],
+        caveats: {
+          order: "<b>비회원 주문은 리텐션 집계에서 빠집니다.</b> 게스트 결제는 식별자가 없어 같은 사람이 다시 사도 재구매로 묶이지 않습니다. 비중이 커질수록 리텐션이 실제보다 낮게 보입니다 — <b>게스트 주문에 연락처 해시 같은 식별자를 남겨 나중에 회원과 잇는 작업이 필요합니다(소급 불가).</b>",
+          attempt: "<b>비회원 주문은 리텐션 집계에서 빠집니다.</b> 게스트 결제는 식별자가 없어 같은 사람이 다시 사도 재구매로 묶이지 않습니다. 비중이 커질수록 리텐션이 실제보다 낮게 보입니다 — <b>게스트 주문에 연락처 해시 같은 식별자를 남겨 나중에 회원과 잇는 작업이 필요합니다(소급 불가).</b>",
+        },
+      },
+      {
         id: "plat",
         label: "플랫폼",
         items: ["iOS", "Android", "Web"],
@@ -310,6 +340,8 @@ export const LAYER_SPECS: LayerSpec[] = [
   /* ================================ 04 유지 ================================ */
   {
     id: "retain",
+    /* 구매자 리텐션과 판매자 리텐션을 나눠 본다 — 한쪽만 보면 절반을 눈 감는다 */
+    lens: { scope: "both", volume: { demand: 0.9, supply: 0.16 }, rate: { demand: 0.96, supply: 1.31 } },
     idx: "04",
     title: "유지",
     eyebrow: "D7 리텐션",
@@ -368,13 +400,15 @@ export const LAYER_SPECS: LayerSpec[] = [
       {
         id: "grade",
         label: "등급",
-        items: ["파머", "파머셀러", "프리마스터", "마스터", "파매니악"],
+        /* 파머(구매자) → 파머셀러(판매자) 에서 **역할이 바뀐다**.
+           하나의 순서형 램프로 칠하면 이 경계가 지워지므로 ordinal 을 쓰지 않는다. */
+        items: MEMBER_GRADE_LABELS,
         ratios: {
           cohort: [0.98, 0.02, 0, 0, 0],
           active: [0.742, 0.168, 0.056, 0.029, 0.005],
         },
         d: [9.2, 8.4, 3.1, 1.2, 12.0],
-        ordinal: true,
+        roleSplit: true,
       },
     ],
     extra: {
@@ -398,6 +432,8 @@ export const LAYER_SPECS: LayerSpec[] = [
   /* ================================ 05 공급 ================================ */
   {
     id: "supply",
+    /* 판매자만의 레이어 */
+    lens: { scope: "supply" },
     idx: "05",
     title: "공급",
     eyebrow: "미니샵 활성률",
@@ -413,7 +449,10 @@ export const LAYER_SPECS: LayerSpec[] = [
       d: [-2.1, -1.4, -0.9],
     },
     footer: [
-      { k: "전체 미니샵", fixed: "1,284개" },
+      {
+        k: "전체 미니샵",
+        m: { name: "전체 미니샵", kind: "count", unit: "개", v: 1284, d: [0, 0, 0] },
+      },
       { k: "신규 개설", m: { name: "신규 개설", kind: "count", unit: "개", v: 38, flow: true, d: [8.6, 12.4, 18.2] } },
     ],
     subs: [
@@ -441,7 +480,7 @@ export const LAYER_SPECS: LayerSpec[] = [
       {
         id: "grade",
         label: "판매자 등급",
-        items: ["파머셀러", "프리마스터", "마스터", "파매니악"],
+        items: SELLER_GRADE_LABELS,
         ratios: {
           shop: [0.642, 0.216, 0.112, 0.03],
           item: [0.418, 0.284, 0.218, 0.08],
@@ -499,6 +538,8 @@ export const LAYER_SPECS: LayerSpec[] = [
   /* ============================= 06 신뢰·품질 ============================= */
   {
     id: "trust",
+    /* 문의를 건 쪽이 구매자인지 판매자인지로 나눈다 */
+    lens: { scope: "both", volume: { demand: 0.78, supply: 0.22 }, rate: { demand: 1.0, supply: 1.06 } },
     idx: "06",
     title: "신뢰·품질",
     eyebrow: "CS 첫응답 시간",
@@ -605,6 +646,8 @@ export const LAYER_SPECS: LayerSpec[] = [
   /* ================================ 07 재무 ================================ */
   {
     id: "finance",
+    /* 판매 관점은 판매자에게 정산되는 금액 기준 */
+    lens: { scope: "both", volume: { demand: 1.0, supply: 0.14 }, rate: { demand: 1.0, supply: 1.0 } },
     idx: "07",
     title: "재무",
     eyebrow: "GMV",
@@ -614,7 +657,10 @@ export const LAYER_SPECS: LayerSpec[] = [
     mainDecimals: 1,
     main: { name: "GMV", kind: "eok", v: 13.4, flow: true, d: [9.3, 9.3, 12.7] },
     footer: [
-      { k: "연 누계", fixed: "189.4억" },
+      {
+        k: "연 누계",
+        m: { name: "연 누계", kind: "eok", v: 189.4, d: [0, 0, 0] },
+      },
       { k: "순매출", m: { name: "순매출", kind: "eok", v: 1.94, flow: true, d: [9.4, 9.3, 12.8] } },
     ],
     subs: [
@@ -638,6 +684,21 @@ export const LAYER_SPECS: LayerSpec[] = [
           order: [0.412, 0.286, 0.132, 0.108, 0.062],
         },
         d: [8.2, 12.4, -2.1, 6.8, 18.6],
+      },
+      {
+        id: "buyer",
+        label: "구매자 유형",
+        /* 비회원 게스트 결제와 판매자 겸업 구매를 분리해서 본다 */
+        items: ["파머", "비회원", "판매자 겸업"],
+        ratios: {
+          gmv: [0.628, 0.216, 0.156],
+          order: [0.612, 0.243, 0.145],
+        },
+        d: [5.1, 13.2, 7.8],
+        caveats: {
+          gmv: "<b>비회원 주문은 리텐션 집계에서 빠집니다.</b> 게스트 결제는 식별자가 없어 같은 사람이 다시 사도 재구매로 묶이지 않습니다. 비중이 커질수록 리텐션이 실제보다 낮게 보입니다 — <b>게스트 주문에 연락처 해시 같은 식별자를 남겨 나중에 회원과 잇는 작업이 필요합니다(소급 불가).</b>",
+          order: "<b>비회원 주문은 리텐션 집계에서 빠집니다.</b> 게스트 결제는 식별자가 없어 같은 사람이 다시 사도 재구매로 묶이지 않습니다. 비중이 커질수록 리텐션이 실제보다 낮게 보입니다 — <b>게스트 주문에 연락처 해시 같은 식별자를 남겨 나중에 회원과 잇는 작업이 필요합니다(소급 불가).</b>",
+        },
       },
       {
         id: "price",
@@ -700,6 +761,8 @@ export const LAYER_SPECS: LayerSpec[] = [
   /* ================================ 08 시스템 ================================ */
   {
     id: "system",
+    /* 크래시·응답속도는 역할과 무관하다 */
+    lens: { scope: "none" },
     idx: "08",
     title: "시스템",
     eyebrow: "크래시프리율",

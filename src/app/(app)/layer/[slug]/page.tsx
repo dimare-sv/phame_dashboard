@@ -10,6 +10,7 @@ import BreakdownCard from "@/components/layer/BreakdownCard";
 import ExtraTableCard from "@/components/layer/ExtraTableCard";
 import { useDashboard } from "@/lib/dashboard-context";
 import { useDashboardData } from "@/lib/use-dashboard-data";
+import { LENS_HINT, LENS_LABEL } from "@/lib/segments";
 import type { LayerData } from "@/lib/data/types";
 
 /**
@@ -20,8 +21,8 @@ import type { LayerData } from "@/lib/data/types";
  */
 export default function LayerPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { period, cmpLabel } = useDashboard();
-  const { data, error, loading } = useDashboardData<LayerData>(`layer/${slug}`, period);
+  const { period, lens, cmpLabel } = useDashboard();
+  const { data, error, loading } = useDashboardData<LayerData>(`layer/${slug}`, period, lens);
   const [axisId, setAxisId] = useState<string | null>(null);
 
   /* 아직 정의하지 않은 레이어(지표 사전·설정 등)는 준비 중 화면으로 */
@@ -41,6 +42,18 @@ export default function LayerPage() {
 
   return (
     <div className="canvas">
+      {/* 관점을 골랐는데 이 레이어가 그 관점으로 안 나뉘면, 조용히 전체 값을
+          보여주는 대신 왜 그런지 말한다 — 안 그러면 필터가 걸린 줄 알고 읽는다 */}
+      {data.lensNote && (
+        <p className="lens-note">
+          <b>{LENS_LABEL[lens]}</b> — {data.lensNote}
+        </p>
+      )}
+      {!data.lensNote && lens !== "all" && (
+        <p className="lens-note lens-note-on">
+          <b>{LENS_LABEL[lens]}</b>으로 좁혀 보고 있습니다. {LENS_HINT[lens]}
+        </p>
+      )}
       <Band label="메인 지표" hint={cmpText} />
       <div className="r-hero">
         <Card title="" bare className="hero-card" captureName={m.eyebrow}>

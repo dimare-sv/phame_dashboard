@@ -7,6 +7,7 @@ import { useDashboard } from "@/lib/dashboard-context";
 import { captureElement } from "@/lib/capture";
 import { NAV_LAYERS, NAV_MAIN, NAV_REF, titleFor, type NavItem } from "@/lib/nav";
 import type { PeriodKey } from "@/lib/data/types";
+import { LENSES, LENS_HINT, LENS_LABEL } from "@/lib/segments";
 
 const PERIOD_TABS: { key: PeriodKey; label: string }[] = [
   { key: "d1", label: "어제" },
@@ -38,7 +39,7 @@ interface ShellProps {
 
 export default function Shell({ children, user, signOut }: ShellProps) {
   const pathname = usePathname();
-  const { period, setPeriod, compare, setCompare } = useDashboard();
+  const { period, setPeriod, compare, setCompare, lens, setLens } = useDashboard();
   const [saving, setSaving] = useState(false);
   const title = titleFor(pathname);
   /* 참조 화면(지표 사전·설정)은 기간과 무관하다 — 쓸 수 없는 필터를 띄워두지 않는다 */
@@ -168,12 +169,16 @@ export default function Shell({ children, user, signOut }: ShellProps) {
 
                   <select
                     className="sel"
-                    aria-label="유저 타입"
-                    disabled
-                    title="user_type 파라미터 적용 후 활성화"
-                    defaultValue="pending"
+                    aria-label="구매·판매 관점"
+                    value={lens}
+                    title={LENS_HINT[lens]}
+                    onChange={(e) => setLens(e.target.value as typeof lens)}
                   >
-                    <option value="pending">유저 타입 (준비 중)</option>
+                    {LENSES.map((l) => (
+                      <option key={l} value={l}>
+                        {LENS_LABEL[l]}
+                      </option>
+                    ))}
                   </select>
                 </>
               )}

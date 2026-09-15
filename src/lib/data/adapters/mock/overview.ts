@@ -6,7 +6,8 @@
  */
 import type { OverviewData, PeriodKey, PlatformData, Tile } from "../../types";
 import { LAYER_SPECS } from "./layer-specs";
-import { PERIODS, makeSeries, metricValue, relativeDelta, renderMetric } from "./build";
+import { PERIODS, lensMetric, makeSeries, metricValue, relativeDelta, renderMetric } from "./build";
+import { lensApplies, type Lens } from "@/lib/segments";
 
 const P_INDEX: Record<PeriodKey, 0 | 1 | 2> = { d1: 0, d7: 1, d28: 2 };
 
@@ -148,39 +149,42 @@ const PLATFORM: Record<PeriodKey, Pick<PlatformData, "base" | "users" | "rows">>
   },
 };
 
-function buildTiles(period: PeriodKey): Tile[] {
+function buildTiles(period: PeriodKey, lens: Lens): Tile[] {
   return LAYER_SPECS.map((spec) => {
-    const r = renderMetric(spec.main, period);
+    /* 타일도 레이어와 같은 관점으로 좁힌다 — 개요와 탭의 숫자가 갈리면 안 된다 */
+    const main = lensMetric(spec.main, lens, spec.lens);
+    const r = renderMetric(main, period);
     return {
       idx: spec.idx,
       name: spec.eyebrow,
       value: r.value,
       delta: r.delta,
       spark: makeSeries(
-        metricValue(spec.main, period),
-        relativeDelta(spec.main, period),
-        `${spec.id}tile${period}`,
+        metricValue(main, period),
+        relativeDelta(main, period),
+        `${spec.id}tile${period}${lens}`,
         8,
       ),
       href: `/layer/${spec.id}`,
       metricId: spec.metricId,
-      raw: metricValue(spec.main, period),
+      raw: metricValue(main, period),
+      lensNA: lens !== "all" && !lensApplies(spec.lens?.scope ?? "none", lens),
     };
   });
 }
 
-function buildWatch(period: PeriodKey): OverviewData["watch"] {
+function buildWatch(period: PeriodKey, lens: Lens): OverviewData["watch"] {
   const fromTiles = LAYER_SPECS.map((spec) => ({
     metricId: spec.metricId,
     name: spec.eyebrow,
-    raw: metricValue(spec.main, period),
+    raw: metricValue(lensMetric(spec.main, lens, spec.lens), period),
     unit: spec.mainUnit,
     decimals: spec.mainDecimals,
   }));
   return [...fromTiles, ...WATCH_EXTRA[period]];
 }
 
-export function buildOverview(period: PeriodKey, asOf: string): OverviewData {
+export function buildOverview(period: PeriodKey, asOf: string, lens: Lens = "all"): OverviewData {
   const pf = PLATFORM[period];
   return {
     period: PERIODS[period],
@@ -201,11 +205,11 @@ export function buildOverview(period: PeriodKey, asOf: string): OverviewData {
     },
     wauTrend: WAU_TREND,
     wauComposition: WAU_COMPOSITION,
-    tiles: buildTiles(period),
+    tiles: buildTiles(period, lens),
     platform: { ...pf, columns: PLATFORM_COLUMNS, colors: PLATFORM_COLORS },
     funnel: FUNNEL_STAGES.map((s, i) => ({ ...s, value: FUNNEL_VALUES[period][i] })),
     cohort: COHORT,
-    watch: buildWatch(period),
+    watch: buildWatch(period, lens),
     highlights: HIGHLIGHTS,
   };
 }

@@ -1,3 +1,5 @@
+import type { Lens, LensScope } from "@/lib/segments";
+
 /**
  * 대시보드 도메인 타입.
  *
@@ -60,6 +62,8 @@ export interface Tile {
    * 서버를 다시 부르지 않고 경고가 갱신되어야 한다.
    */
   raw: number;
+  /** 관점을 골랐지만 이 지표에는 적용되지 않음 — 전체 값이 그대로 보인다는 표시 */
+  lensNA?: boolean;
 }
 
 export interface CompositionSlice {
@@ -196,6 +200,8 @@ export interface BreakdownAxis {
   deltas: Delta[];
   /** 순서가 있는 축(등급·가격대·별점)은 단일 색상 램프를 쓴다 */
   ordinal?: boolean;
+  /** 중간에 역할 경계가 있는 축(등급) — 색을 두 계열로 나눈다 */
+  roleSplit?: boolean;
   /** 대상 id → 이 조합에만 붙는 선행조건 경고 */
   caveats?: Record<string, string>;
 }
@@ -224,6 +230,10 @@ export interface ExtraTable {
 }
 
 export interface LayerData {
+  /** 이 레이어가 구매/판매 관점을 지원하는 범위 */
+  lensScope: LensScope;
+  /** 관점이 적용되지 않을 때 화면에 띄울 사유 — 적용되면 undefined */
+  lensNote?: string;
   /** 레일의 번호 — "01" */
   idx: string;
   title: string;
@@ -260,7 +270,7 @@ export interface LayerData {
 /** 어댑터가 구현해야 하는 계약. mock / ga4 / db 가 이걸 각각 구현한다. */
 export interface DashboardSource {
   readonly name: string;
-  getOverview(period: PeriodKey): Promise<OverviewData>;
+  getOverview(period: PeriodKey, lens: Lens): Promise<OverviewData>;
   /** layerId 는 레일의 슬러그 — acq / active / convert / … */
-  getLayer(layerId: string, period: PeriodKey): Promise<LayerData | null>;
+  getLayer(layerId: string, period: PeriodKey, lens: Lens): Promise<LayerData | null>;
 }

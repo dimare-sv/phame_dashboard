@@ -14,8 +14,8 @@ import { useDashboardData } from "@/lib/use-dashboard-data";
 import type { OverviewData } from "@/lib/data/types";
 
 export default function OverviewPage() {
-  const { period, cmpLabel } = useDashboard();
-  const { data, error, loading } = useDashboardData<OverviewData>("overview", period);
+  const { period, lens, cmpLabel } = useDashboard();
+  const { data, error, loading } = useDashboardData<OverviewData>("overview", period, lens);
 
   if (error) return <div className="canvas"><p className="state err">{error}</p></div>;
   if (loading || !data) return <div className="canvas"><p className="state">불러오는 중…</p></div>;

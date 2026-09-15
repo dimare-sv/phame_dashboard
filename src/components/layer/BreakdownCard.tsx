@@ -5,11 +5,31 @@ import Card from "@/components/Card";
 import Donut from "@/components/charts/Donut";
 import { fmt, pct, splitExact } from "@/lib/format";
 import type { Breakdown } from "@/lib/data/types";
+import { SELLER_GRADE_LABELS, sideOf } from "@/lib/segments";
 
 /* 명목형 5색 — CVD 전체 쌍 검증 통과 */
 const CATEGORICAL = ["#2E6FB7", "#C0660A", "#A03A8F", "#0F8E63", "#7A8699"];
-/* 순서가 있는 축(등급·가격대·버전)은 단일 색상 램프로 — 순서를 색이 말해준다 */
+/* 순서가 있는 축(가격대·버전)은 단일 색상 램프로 — 순서를 색이 말해준다 */
 const ORDINAL = ["#8FB6DA", "#649BCB", "#3E79B6", "#1E5A97", "#0C3559"];
+/**
+ * 등급 축은 중간에 **역할이 바뀐다** (파머 → 파머셀러).
+ * 하나의 램프로 칠하면 그 경계가 지워지고 "한 칸씩 오르는 등급" 으로 읽히므로,
+ * 구매자 쪽은 파랑 계열, 판매자 쪽은 주황 계열로 나눠 칠한다.
+ */
+const BUYER_RAMP = ["#8FB6DA", "#2E6FB7"];
+const SELLER_RAMP = ["#E0A46A", "#C0660A", "#8A4606", "#5A2D04"];
+
+function roleSplitPalette(items: string[]): string[] {
+  return items.map((label) => {
+    const side = sideOf(label);
+    if (side === "seller") {
+      const idx = SELLER_GRADE_LABELS.indexOf(label);
+      return SELLER_RAMP[Math.min(Math.max(idx, 0), SELLER_RAMP.length - 1)];
+    }
+    /* 비회원·파머 — 구매자 쪽 */
+    return label === "비회원" ? BUYER_RAMP[0] : BUYER_RAMP[1];
+  });
+}
 
 /**
  * 분해는 "대상(무엇을) × 축(어떻게)" 2축이다.
@@ -33,7 +53,9 @@ export default function BreakdownCard({
   const ratios = axis.ratios[target.id] ?? [];
   const counts = splitExact(target.total, ratios);
   /* 램프는 5단이므로, 항목이 더 적으면 어두운 쪽부터 쓰지 않고 균등하게 고른다 */
-  const palette = axis.ordinal
+  const palette = axis.roleSplit
+    ? roleSplitPalette(axis.items)
+    : axis.ordinal
     ? axis.items.map(
         (_, i) => ORDINAL[Math.round((i / Math.max(1, axis.items.length - 1)) * (ORDINAL.length - 1))],
       )

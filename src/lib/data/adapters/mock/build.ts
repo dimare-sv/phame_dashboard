@@ -6,6 +6,7 @@
  * 그래서 레이어는 "지표 명세"만 쓰고, 기간 반영·단위·증감색은 전부 여기서 처리한다.
  */
 import { fmt, mmss } from "@/lib/format";
+import { lensApplies, LENS_SCOPE_NOTE, type Lens, type LensScope } from "@/lib/segments";
 import type {
   Breakdown,
   BreakdownAxis,
@@ -210,6 +211,8 @@ export interface AxisSpec {
   /** 증가가 좋은 축인가 (결제 실패 사유처럼 감소가 좋으면 false) */
   up?: boolean;
   ordinal?: boolean;
+  /** 등급 축처럼 중간에 역할 경계가 있는 축 — 색을 두 계열로 나눈다 */
+  roleSplit?: boolean;
   caveats?: Record<string, string>;
 }
 
@@ -231,6 +234,62 @@ export interface ExtraSpec {
   footnote?: string;
 }
 
+/* ------------------------------ 관점(렌즈) ------------------------------ */
+
+/**
+ * 구매/판매 관점에서 이 레이어를 어떻게 좁혀 보여줄 것인가.
+ *
+ * 더미 단계에서는 비율을 곱해 흉내낸다. 실데이터가 붙으면 이 계수는 사라지고
+ * 어댑터가 실제로 역할별 집계를 질의한다 — **화면 계약은 그대로다**.
+ */
+export interface LensSpec {
+  scope: LensScope;
+  /** 수량형(명·건·원)에 곱할 비율 */
+  volume?: Record<Exclude<Lens, "all">, number>;
+  /** 비율형에 곱할 비율. 100% 를 넘지 않게 잘린다 */
+  rate?: Record<Exclude<Lens, "all">, number>;
+}
+
+const VOLUME_KINDS: Kind[] = ["count", "eok", "manwon"];
+const RATE_KINDS: Kind[] = ["rate", "rate2"];
+
+/** 이 관점에서 쓸 배수. 해당 없으면 1 */
+function lensFactor(kind: Kind, lens: Lens, ls?: LensSpec): number {
+  if (lens === "all" || !ls || !lensApplies(ls.scope, lens)) return 1;
+  if (VOLUME_KINDS.includes(kind)) return ls.volume?.[lens] ?? 1;
+  if (RATE_KINDS.includes(kind)) return ls.rate?.[lens] ?? 1;
+  /* 시간·점수형은 역할로 갈라도 크게 다르지 않다 — 건드리지 않는다 */
+  return 1;
+}
+
+function scaleBy(v: number, f: number, cap: number): number {
+  return Math.min(v * f, cap);
+}
+
+/** 증감(d)은 비율이라 배수에 영향받지 않는다 — 값만 조정한다 */
+export function lensMetric(m: MetricSpec, lens: Lens, ls?: LensSpec): MetricSpec {
+  const f = lensFactor(m.kind, lens, ls);
+  if (f === 1) return m;
+  const cap = RATE_KINDS.includes(m.kind) ? 100 : Number.POSITIVE_INFINITY;
+  return {
+    ...m,
+    v: scaleBy(m.v, f, cap),
+    vp: m.vp
+      ? [scaleBy(m.vp[0], f, cap), scaleBy(m.vp[1], f, cap), scaleBy(m.vp[2], f, cap)]
+      : undefined,
+  };
+}
+
+function lensTarget(t: TargetSpec, lens: Lens, ls?: LensSpec): TargetSpec {
+  const f = lensFactor("count", lens, ls);
+  if (f === 1) return t;
+  return {
+    ...t,
+    v: t.v * f,
+    vp: t.vp ? [t.vp[0] * f, t.vp[1] * f, t.vp[2] * f] : undefined,
+  };
+}
+
 export interface LayerSpec {
   id: string;
   idx: string;
@@ -249,18 +308,23 @@ export interface LayerSpec {
   targets: TargetSpec[];
   axes: AxisSpec[];
   extra?: ExtraSpec;
+  /** 구매/판매 관점 지원 범위. 생략하면 역할과 무관한 지표로 본다 */
+  lens?: LensSpec;
 }
 
 /* ------------------------------ 조립 ------------------------------ */
 
-function buildBreakdown(spec: LayerSpec, p: PeriodKey): Breakdown {
-  const targets = spec.targets.map((t) => ({
-    id: t.id,
-    label: t.label,
-    unit: t.unit,
-    total: Math.round(t.vp ? t.vp[P_INDEX[p]] : t.flow ? t.v * SCALE[p] : t.v),
-    fixedPeriod: t.fixedPeriod,
-  }));
+function buildBreakdown(spec: LayerSpec, p: PeriodKey, lens: Lens): Breakdown {
+  const targets = spec.targets.map((raw) => {
+    const t = lensTarget(raw, lens, spec.lens);
+    return {
+      id: t.id,
+      label: t.label,
+      unit: t.unit,
+      total: Math.round(t.vp ? t.vp[P_INDEX[p]] : t.flow ? t.v * SCALE[p] : t.v),
+      fixedPeriod: t.fixedPeriod,
+    };
+  });
 
   const axes: BreakdownAxis[] = spec.axes.map((a) => ({
     id: a.id,
@@ -269,6 +333,7 @@ function buildBreakdown(spec: LayerSpec, p: PeriodKey): Breakdown {
     ratios: a.ratios,
     deltas: a.d.map((d) => makeDelta(d, "count", a.up ?? true)),
     ordinal: a.ordinal,
+    roleSplit: a.roleSplit,
     caveats: a.caveats,
   }));
 
@@ -330,9 +395,24 @@ function buildExtra(spec: ExtraSpec, p: PeriodKey): ExtraTable {
   };
 }
 
-export function buildLayer(spec: LayerSpec, p: PeriodKey, asOf: string): LayerData {
-  const main = renderMetric(spec.main, p);
-  const subs: SubTile[] = spec.subs.map((m) => {
+export function buildLayer(
+  spec: LayerSpec,
+  p: PeriodKey,
+  asOf: string,
+  lens: Lens = "all",
+): LayerData {
+  const scope: LensScope = spec.lens?.scope ?? "none";
+  /* 관점이 이 레이어에 해당하지 않으면 값을 건드리지 않고, 왜 그런지 화면에 알린다 */
+  const applies = lensApplies(scope, lens);
+  const lensNote =
+    lens === "all" || applies || scope === "both"
+      ? undefined
+      : LENS_SCOPE_NOTE[scope as Exclude<LensScope, "both">];
+
+  const mainSpec = lensMetric(spec.main, lens, spec.lens);
+  const main = renderMetric(mainSpec, p);
+  const subs: SubTile[] = spec.subs.map((raw) => {
+    const m = lensMetric(raw, lens, spec.lens);
     const r = renderMetric(m, p);
     return { name: m.name, value: r.value, delta: r.delta };
   });
@@ -355,15 +435,15 @@ export function buildLayer(spec: LayerSpec, p: PeriodKey, asOf: string): LayerDa
   const trendDec = k === "count" || k === "manwon" || k === "min" ? 0 : k === "rate2" ? 2 : 1;
 
   const capped = k === "rate" || k === "rate2";
-  const series = makeSeries(metricValue(spec.main, p), relativeDelta(spec.main, p), spec.id + p, 12, capped);
+  const series = makeSeries(metricValue(mainSpec, p), relativeDelta(mainSpec, p), spec.id + p + lens, 12, capped);
 
   /* 차트 종류는 **지표**의 성질이지 기간의 성질이 아니다.
      기간을 바꿀 때마다 막대가 선으로 바뀌면 같은 지표로 안 읽힌다.
      그래서 판정은 항상 최근 7일 기준 한 번만 한다. */
   const probe = makeSeries(
-    metricValue(spec.main, "d7"),
-    relativeDelta(spec.main, "d7"),
-    `${spec.id}d7`,
+    metricValue(mainSpec, "d7"),
+    relativeDelta(mainSpec, "d7"),
+    `${spec.id}d7${lens}`,
     12,
     capped,
   );
@@ -384,7 +464,7 @@ export function buildLayer(spec: LayerSpec, p: PeriodKey, asOf: string): LayerDa
       delta: main.delta,
       footer: spec.footer.map((f) => ({
         k: f.k,
-        v: f.fixed ?? (f.m ? renderMetric(f.m, p).value : "—"),
+        v: f.fixed ?? (f.m ? renderMetric(lensMetric(f.m, lens, spec.lens), p).value : "—"),
         pending: f.pending,
       })),
     },
@@ -397,7 +477,9 @@ export function buildLayer(spec: LayerSpec, p: PeriodKey, asOf: string): LayerDa
       kind,
     },
     subs,
-    breakdown: buildBreakdown(spec, p),
+    lensScope: scope,
+    lensNote,
+    breakdown: buildBreakdown(spec, p, lens),
     extra: spec.extra ? buildExtra(spec.extra, p) : undefined,
   };
 }
