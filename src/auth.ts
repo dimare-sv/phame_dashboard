@@ -10,8 +10,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           clientSecret: process.env.AUTH_GOOGLE_SECRET,
           authorization: {
             params: {
-              /* 회사 계정만 뜨게 하는 힌트. 강제력은 없으므로 아래에서 다시 본다 */
-              hd: ALLOWED_DOMAIN,
+              /* 회사 계정만 뜨게 하는 힌트. 강제력은 없으므로 아래에서 다시 본다.
+                 ALLOWED_DOMAIN 이 비어 있으면(도메인 제한 없음) 힌트도 생략한다 */
+              ...(ALLOWED_DOMAIN ? { hd: ALLOWED_DOMAIN } : {}),
               prompt: "select_account",
             },
           },
@@ -37,7 +38,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn({ profile }) {
       const email = (profile?.email ?? "").toLowerCase();
       const verified = profile?.email_verified === true;
-      return verified && email.endsWith(`@${ALLOWED_DOMAIN.toLowerCase()}`);
+      if (!verified) return false;
+      if (!ALLOWED_DOMAIN) return true;
+      return email.endsWith(`@${ALLOWED_DOMAIN.toLowerCase()}`);
     },
   },
 });

@@ -2,7 +2,9 @@ import { signIn } from "@/auth";
 import { ALLOWED_DOMAIN, authConfigured } from "@/lib/auth-config";
 
 const ERROR_MESSAGE: Record<string, string> = {
-  AccessDenied: `@${ALLOWED_DOMAIN} 계정만 들어올 수 있습니다. 회사 계정으로 다시 시도해 주세요.`,
+  AccessDenied: ALLOWED_DOMAIN
+    ? `@${ALLOWED_DOMAIN} 계정만 들어올 수 있습니다. 회사 계정으로 다시 시도해 주세요.`
+    : "로그인에 실패했습니다. 다시 시도해 주세요.",
   Configuration: "로그인 설정이 아직 완료되지 않았습니다. 관리자에게 알려주세요.",
   Verification: "인증 링크가 만료되었습니다. 다시 시도해 주세요.",
 };
@@ -37,11 +39,23 @@ export default async function LoginPage({
           </span>
         </div>
 
-        <h1>기획팀 전용입니다</h1>
-        <p className="login-lead">
-          <b>@{ALLOWED_DOMAIN}</b> 구글 계정으로 로그인하세요. 다른 도메인 계정은 로그인해도
-          들어올 수 없습니다.
-        </p>
+        {ALLOWED_DOMAIN ? (
+          <>
+            <h1>기획팀 전용입니다</h1>
+            <p className="login-lead">
+              <b>@{ALLOWED_DOMAIN}</b> 구글 계정으로 로그인하세요. 다른 도메인 계정은 로그인해도
+              들어올 수 없습니다.
+            </p>
+          </>
+        ) : (
+          <>
+            <h1>파메 플랫폼 대시보드</h1>
+            <p className="login-lead">
+              구글 계정으로 로그인하세요. 현재는 도메인 제한이 꺼져 있어 누구나 로그인할 수
+              있습니다.
+            </p>
+          </>
+        )}
 
         {error && (
           <p className="login-error">
