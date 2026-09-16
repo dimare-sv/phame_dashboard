@@ -1,8 +1,8 @@
 /**
- * 지표 사전 — 8개 레이어 · 84개 지표.
+ * 지표 사전 — 8개 레이어 · 76개 지표.
  *
  * **id 가 이 파일의 존재 이유다.** 화면의 카드와 정의를 연결하려면 지표마다
- * 변하지 않는 이름표가 있어야 하고, 나중에 붙이면 84개에 소급해서 달아야 한다.
+ * 변하지 않는 이름표가 있어야 하고, 나중에 붙이면 다음 번호로 소급해서 달아야 한다.
  * id 는 한 번 부여하면 바꾸지 않는다 — 지표가 추가되면 그 레이어의 다음 번호를 쓴다.
  *
  * 원본: 지표 사전 v1 아티팩트 (2026-09-14 시점)
@@ -142,16 +142,6 @@ export const METRIC_LAYERS: MetricLayer[] = [
         direction: "higher",
       },
       {
-        id: "acq-08",
-        name: "친구초대 전환율 (K-factor)",
-        segment: "초대자별",
-        definition: "초대받은 사람이 실제 가입한 비율. 친구초대 활성률의 진짜 지표",
-        calc: "referral 경유 sign_up ÷ 코드 복사 수",
-        source: "필요: sign_up에 referral_code 파라미터 — 긴급 04",
-        status: "none",
-        direction: "higher",
-      },
-      {
         id: "acq-09",
         name: "추천인 탐색 이용률",
         segment: "-",
@@ -182,32 +172,15 @@ export const METRIC_LAYERS: MetricLayer[] = [
     metrics: [
       {
         id: "active-01",
-        name: "DAU / WAU / MAU",
+        name: "기능 활성률",
         segment: "구매자 / 판매자 · 플랫폼별",
-        definition: "활성 유저 수. L3(의미 있는 액션) 기준",
-        calc: "COUNT(DISTINCT user_id) WHERE 활성 이벤트 발생",
-        source: "GA4 활성 이벤트 집합 · 전제: user_id + user_type — 긴급 01·02",
-        status: "none",
-        direction: "higher",
-      },
-      {
-        id: "active-02",
-        name: "WAU 구성 분해",
-        segment: "신규 / 복귀 / 유지",
-        definition: "WAU 총량의 내부 구성. 총량만 보면 절대 안 보이는 위험 신호를 드러냄",
-        calc: "신규: first_visit 주 = 당주 / 복귀: 직전 4주 비활성 후 재활성 / 유지: 직전주에도 활성",
-        source: "GA4 코호트 — user_id 전제",
-        status: "none",
-        direction: "higher",
-      },
-      {
-        id: "active-03",
-        name: "Stickiness",
-        segment: "전체 / 양면별",
-        definition: "방문 빈도의 질. 30%면 월 9일 방문 수준",
-        calc: "DAU ÷ MAU × 100",
-        source: "GA4 — user_id 전제",
-        status: "none",
+        definition:
+          "활성 유저 중 핵심 기능(채팅 개설·구매·피드 작성·후기 작성 등)을 1개 이상 쓴 비율 — L3 기준",
+        calc: "핵심 기능 이벤트 발생 유저 수 ÷ GA4 활성 유저 수",
+        source:
+          "GA4 자동 활성 유저(기기 단위) + 핵심 기능 이벤트 — 로그인 기준으로 기기 간 중복을 " +
+          "제거하려면 user_id 필요(긴급 01), 그 전까지는 기기 단위 근사치",
+        status: "ga4",
         direction: "higher",
       },
       {
@@ -281,16 +254,6 @@ export const METRIC_LAYERS: MetricLayer[] = [
         direction: "higher",
       },
       {
-        id: "active-11",
-        name: "활성 채팅방 수 · 활성률",
-        segment: "-",
-        definition: "양측이 실제로 대화를 주고받는 방. 개설만 되고 답 없는 방은 제외",
-        calc: "양방향 메시지 2건 이상 방 ÷ 전체 개설 방",
-        source: "메시지 발송 이벤트 없음 — DB chat_messages 필요",
-        status: "none",
-        direction: "higher",
-      },
-      {
         id: "active-12",
         name: "채팅 → 거래 전환",
         segment: "상품 / 미니샵 / 피드",
@@ -349,16 +312,6 @@ export const METRIC_LAYERS: MetricLayer[] = [
         source: "GA4 search_no_result (검색어 파라미터 확인 필요)",
         status: "ga4",
         direction: "lower",
-      },
-      {
-        id: "active-18",
-        name: "푸시 알림 오픈율",
-        segment: "알림 유형별",
-        definition: "리텐션 레버의 효율. 현재 분모(발송·수신)가 없음",
-        calc: "notification_click ÷ 발송 수",
-        source: "GA4 notification_click만 존재 — 발송/수신 로그 필요",
-        status: "none",
-        direction: "higher",
       },
       {
         id: "active-19",
@@ -480,16 +433,6 @@ export const METRIC_LAYERS: MetricLayer[] = [
         direction: "higher",
       },
       {
-        id: "convert-11",
-        name: "배너별 CTR",
-        segment: "위치 / 소재별",
-        definition: "소재 성과. 현재 banner1~8이 개별 이벤트라 소재 교체 시 추적이 끊김",
-        calc: "banner{n}_click ÷ banner{n}_view",
-        source: "GA4 *_banner{n}_click/view (46개) · 필요: banner_id·banner_name 파라미터",
-        status: "none",
-        direction: "higher",
-      },
-      {
         id: "convert-12",
         name: "프로모션 배너 CTR",
         segment: "-",
@@ -509,16 +452,6 @@ export const METRIC_LAYERS: MetricLayer[] = [
         status: "ga4",
         direction: "higher",
       },
-      {
-        id: "convert-14",
-        name: "전체 상품 중 판매된 상품 수",
-        segment: "카테고리별",
-        definition: "상품 회전율. 재고가 도는가, 일부만 팔리는가",
-        calc: "DISTINCT 판매 item_id ÷ 전체 등록 상품 수",
-        source: "필요: purchase에 items[] 파라미터 + DB products 조인 — 긴급 03",
-        status: "none",
-        direction: "higher",
-      },
     ],
   },
   {
@@ -534,8 +467,10 @@ export const METRIC_LAYERS: MetricLayer[] = [
         segment: "가입 주차 코호트별",
         definition: "가입 후 N일째 돌아온 비율. 플랫폼 생존을 가장 먼저 알려주는 지표",
         calc: "코호트 내 D+N 활성 유저 ÷ 코호트 크기",
-        source: "GA4 코호트 탐색 — user_id 전제 (긴급 01)",
-        status: "none",
+        source:
+          "GA4 코호트 탐색(기기 단위) — 로그인 기준으로 기기 간 중복을 제거하려면 user_id " +
+          "필요(긴급 01), 그 전까지는 기기 단위 근사치",
+        status: "ga4",
         direction: "higher",
       },
       {
@@ -963,16 +898,6 @@ export const METRIC_LAYERS: MetricLayer[] = [
         source: "GA4 자동 수집 (app_version)",
         status: "ga4",
         direction: "higher",
-      },
-      {
-        id: "system-06",
-        name: "API 오류율 · 응답 지연",
-        segment: "엔드포인트별",
-        definition: "서버 측 건강도. 결제 실패율과 함께 보면 장애 원인 추적 가능",
-        calc: "5xx 응답 ÷ 전체 요청",
-        source: "APM/서버 로그 필요 — 현재 수집 계획 없음",
-        status: "none",
-        direction: "lower",
       },
     ],
   },

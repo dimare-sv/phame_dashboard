@@ -23,7 +23,7 @@ src/
       build.ts                  명세 → 화면 데이터. 단위·증감색·기간반영이 전부 여기
       layer-specs.ts            8개 레이어의 지표 명세 ← 실제 내용은 이 파일
       overview.ts               L0 개요 (타일 8개는 layer-specs 에서 뽑는다)
-  lib/metrics/dictionary.ts     지표 사전 84개 + 불변 id. 카드↔정의를 잇는 고리
+  lib/metrics/dictionary.ts     지표 사전 76개 + 불변 id. 카드↔정의를 잇는 고리
   lib/settings.ts               목표·임계 (유일한 출처)
   lib/settings-context.tsx      브라우저 로컬 오버라이드 — DB 연동 시 이 훅만 교체
   app/api/
@@ -150,8 +150,11 @@ Vercel 에 올릴 때는 같은 값을 Project Settings → Environment Variable
 ## 남은 일
 
 - 각 레이어의 **메인 지표·분해 축 확정** — 현재 구성은 지표 사전 기준 제안이다
-- 개발팀 회신 대기 P0 3건 — GA4 `user_id` 전송 / `user_type` user property /
-  가입 시점 유입정보 `users` 적재. 셋 다 **소급 불가**라 오픈 전에 들어가야 한다.
+- 개발팀 회신 대기 P0 2건(**소급 불가**라 오픈 전에 들어가야 한다) — `user_type` user property
+  (North Star WAU 구성의 양면 분해용) / 가입 시점 유입정보 `users` 적재(유입채널 분해용).
+  `user_id`는 더 이상 막는 조건이 아니다 — 없으면 기기 단위 근사치로 대체(활성·유지 레이어),
+  단 North Star 카드의 신규/복귀/유지 구성(WAU composition)은 여전히 코호트 단위 식별이
+  필요해서 지금은 목데이터로만 채워져 있다. 이 부분은 실측 전환 시 재검토 필요.
 - `daily_metrics` 집계 테이블 설계 (DB 스키마 수령 후)
 - **CAC 는 광고비가 아니라 추천 보상·쿠폰 기준**이다. 유료 광고를 집행하지 않으므로
   광고비는 측정 불가가 아니라 값이 0 이다. 유료 채널을 시작하면 이 전제가 바뀌므로
