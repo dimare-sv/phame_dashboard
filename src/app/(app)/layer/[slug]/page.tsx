@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Band from "@/components/Band";
 import Card from "@/components/Card";
 import Stub from "@/components/Stub";
@@ -133,7 +133,10 @@ export default function LayerPage() {
       </div>
 
       <Band label="서브 지표" />
-      <div className="subtiles">
+      <div
+        className="subtiles"
+        style={{ "--sub-cols": Math.ceil(data.subs.length / 2) || 1 } as CSSProperties}
+      >
         {data.subs.map((s) => (
           <div className="subtile" key={s.name}>
             <span className="sn">

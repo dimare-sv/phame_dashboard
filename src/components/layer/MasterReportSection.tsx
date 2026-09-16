@@ -25,8 +25,10 @@ export default function MasterReportSection({ data }: { data: MasterReportData }
         {data.kpis.map((k) => (
           <div className="mr-kpi" key={k.label}>
             <span className="mr-kpi-label">{k.label}</span>
-            <span className="mr-kpi-value num">{k.value}</span>
-            <span className={`delta ${k.delta.good ? "d-good" : "d-bad"}`}>{k.delta.text}</span>
+            <span className="mr-kpi-row">
+              <span className="mr-kpi-value num">{k.value}</span>
+              <span className={`delta ${k.delta.good ? "d-good" : "d-bad"}`}>{k.delta.text}</span>
+            </span>
           </div>
         ))}
       </div>

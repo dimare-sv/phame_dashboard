@@ -250,6 +250,8 @@ export interface AxisSpec {
   /** 항목 라벨 → 아이콘(이모지). 국가처럼 색보다 아이콘이 더 잘 구분되는 축에 쓴다 */
   icons?: Record<string, string>;
   caveats?: Record<string, string>;
+  /** 항목 라벨 → 마우스오버 시 보여줄 짧은 참고 텍스트 (결제수단별 PG 수수료 등) */
+  itemNotes?: Record<string, string>;
 }
 
 export interface ExtraSpec {
@@ -399,6 +401,7 @@ function buildBreakdown(spec: LayerSpec, p: PeriodKey, lens: Lens): Breakdown {
     colors: a.colors,
     icons: a.icons,
     caveats: a.caveats,
+    itemNotes: a.itemNotes,
   }));
 
   return { targets, axes };

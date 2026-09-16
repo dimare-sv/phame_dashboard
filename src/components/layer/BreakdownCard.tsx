@@ -4,6 +4,7 @@ import { useState } from "react";
 import Card from "@/components/Card";
 import Flag from "@/components/Flag";
 import Donut from "@/components/charts/Donut";
+import { useTooltip } from "@/components/Tooltip";
 import { fmt, pct, splitExact } from "@/lib/format";
 import type { Breakdown } from "@/lib/data/types";
 import { SELLER_GRADE_LABELS, sideOf } from "@/lib/segments";
@@ -56,6 +57,7 @@ export default function BreakdownCard({
   periodLabel: string;
   onAxisChange?: (axisId: string) => void;
 }) {
+  const { show, hide } = useTooltip();
   const [targetId, setTargetId] = useState(breakdown.targets[0].id);
   const [axisId, setAxisId] = useState(breakdown.axes[0].id);
 
@@ -83,6 +85,36 @@ export default function BreakdownCard({
     ) : (
       <i className="sw" style={{ background: palette[i] }} />
     );
+
+  /* 항목별 참고 텍스트(결제수단 → PG 수수료 등) — 있을 때만 (i) 를 붙인다 */
+  const noteTip = (label: string) => {
+    const note = axis.itemNotes?.[label];
+    if (!note) return null;
+    return (
+      <i
+        className="info-tip"
+        role="img"
+        aria-label={`${label} 참고: ${note}`}
+        tabIndex={0}
+        onClick={(ev) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+        }}
+        onMouseEnter={(ev) => show(note, ev)}
+        onMouseMove={(ev) => show(note, ev)}
+        onMouseLeave={hide}
+        onFocus={(ev) =>
+          show(note, {
+            clientX: ev.currentTarget.getBoundingClientRect().right,
+            clientY: ev.currentTarget.getBoundingClientRect().top,
+          })
+        }
+        onBlur={hide}
+      >
+        i
+      </i>
+    );
+  };
 
   function pickAxis(id: string) {
     setAxisId(id);
@@ -151,7 +183,8 @@ export default function BreakdownCard({
               counts[i] ? (
                 <span key={n}>
                   {swatch(n, i)}
-                  {n} <b>{pct(counts[i], target.total)}</b>
+                  {n}
+                  {noteTip(n)} <b>{pct(counts[i], target.total)}</b>
                 </span>
               ) : null,
             )}
@@ -177,6 +210,7 @@ export default function BreakdownCard({
                       <span className="nm">
                         {swatch(n, i)}
                         {n}
+                        {noteTip(n)}
                       </span>
                     </td>
                     <td className="num">{c ? fmt(c) + target.unit : "—"}</td>

@@ -1190,7 +1190,9 @@ table.cohort td.lead span {
   box-shadow: var(--shadow);
 }
 .subtile {
-  flex: 1 1 190px;
+  /* 두 줄로 균등하게 나뉘도록 --sub-cols(= 지표 개수/2 올림)만큼 열을 만든다.
+     좁은 화면에서는 190px 아래로 줄지 않아 원래대로 더 잘게 줄바꿈된다. */
+  flex: 1 1 max(190px, calc(100% / var(--sub-cols, 4) - 1px));
   background: var(--card);
   padding: 14px 16px;
   display: flex;
@@ -1569,6 +1571,12 @@ table.mv td.hot {
   font-size: 12px;
   font-weight: 700;
   color: var(--muted);
+}
+.mr-kpi-row {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  flex-wrap: wrap;
 }
 .mr-kpi-value {
   font-size: 22px;

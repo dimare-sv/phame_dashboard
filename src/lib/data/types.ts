@@ -217,6 +217,8 @@ export interface BreakdownAxis {
   icons?: Record<string, string>;
   /** 대상 id → 이 조합에만 붙는 선행조건 경고 */
   caveats?: Record<string, string>;
+  /** 항목 라벨 → 마우스오버 시 보여줄 짧은 참고 텍스트 (결제수단별 PG 수수료 등) */
+  itemNotes?: Record<string, string>;
 }
 
 export interface Breakdown {
