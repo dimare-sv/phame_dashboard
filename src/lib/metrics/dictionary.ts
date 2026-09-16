@@ -218,18 +218,21 @@ export const METRIC_LAYERS: MetricLayer[] = [
         name: "피드 신규 등록 수",
         segment: "일 / 주",
         definition: "UGC 생산량. 커뮤니티 생존의 선행지표",
-        calc: "COUNT(feed_create)",
-        source: "GA4 feed_create · DB feeds (누적)",
-        status: "ga4",
+        calc: "COUNT(feeds) WHERE created_at ∈ 기간",
+        source: "DB feeds.created_at — GA4에는 피드 조회 이벤트만 있고 등록 이벤트가 없음",
+        status: "db",
         direction: "higher",
       },
       {
         id: "active-08",
         name: "피드 반응률",
         segment: "좋아요/최고예요/찜/공유",
-        definition: "콘텐츠가 실제로 소비되는가",
-        calc: "(feed_like + feed_best + feed_bookmark + feed_share) ÷ 피드 노출",
-        source: "GA4 feed_like_click, feed_best_click, feed_bookmark_click, feed_share_click",
+        definition:
+          "콘텐츠가 실제로 소비되는가. 스크롤 중 노출(임프레션) 이벤트가 없어 조회수를 분모로 쓴다",
+        calc: "(feed_like + feed_best + feed_bookmark + feed_share) ÷ 피드 조회수",
+        source:
+          "GA4 feed_like_click, feed_best_click, feed_bookmark_click, feed_share_click ÷ " +
+          "피드 조회 이벤트(정확한 이벤트명 확인 필요) — 노출 이벤트는 없음",
         status: "ga4",
         direction: "higher",
       },
