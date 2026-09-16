@@ -5,7 +5,7 @@ import Card from "@/components/Card";
 import Flag from "@/components/Flag";
 import Donut from "@/components/charts/Donut";
 import { useTooltip } from "@/components/Tooltip";
-import { fmt, pct, splitExact } from "@/lib/format";
+import { fmtWon, pct, splitExact } from "@/lib/format";
 import type { Breakdown } from "@/lib/data/types";
 import { SELLER_GRADE_LABELS, sideOf } from "@/lib/segments";
 
@@ -86,28 +86,41 @@ export default function BreakdownCard({
       <i className="sw" style={{ background: palette[i] }} />
     );
 
-  /* 항목별 참고 텍스트(결제수단 → PG 수수료 등) — 있을 때만 (i) 를 붙인다 */
+  /* 항목별 참고 텍스트(결제수단 → PG 수수료 등) — 있을 때만 (i) 를 붙인다.
+     줄마다 \n 으로 나눠 저장해 두고 여기서 줄바꿈해서 보여준다 */
   const noteTip = (label: string) => {
     const note = axis.itemNotes?.[label];
     if (!note) return null;
+    const lines = note.split("\n");
+    const content = (
+      <>
+        {lines.map((line, i) => (
+          <div key={i}>{line}</div>
+        ))}
+      </>
+    );
     return (
       <i
         className="info-tip"
         role="img"
-        aria-label={`${label} 참고: ${note}`}
+        aria-label={`${label} 참고: ${lines.join(", ")}`}
         tabIndex={0}
         onClick={(ev) => {
           ev.preventDefault();
           ev.stopPropagation();
         }}
-        onMouseEnter={(ev) => show(note, ev)}
-        onMouseMove={(ev) => show(note, ev)}
+        onMouseEnter={(ev) => show(content, ev, { wide: true })}
+        onMouseMove={(ev) => show(content, ev, { wide: true })}
         onMouseLeave={hide}
         onFocus={(ev) =>
-          show(note, {
-            clientX: ev.currentTarget.getBoundingClientRect().right,
-            clientY: ev.currentTarget.getBoundingClientRect().top,
-          })
+          show(
+            content,
+            {
+              clientX: ev.currentTarget.getBoundingClientRect().right,
+              clientY: ev.currentTarget.getBoundingClientRect().top,
+            },
+            { wide: true },
+          )
         }
         onBlur={hide}
       >
@@ -161,10 +174,7 @@ export default function BreakdownCard({
       <div className="bd-body">
         <div>
           <div className="bd-total">
-            <b className="num">
-              {fmt(target.total)}
-              {target.unit}
-            </b>
+            <b className="num">{fmtWon(target.total, target.unit)}</b>
             <span>
               {target.fixedPeriod ? target.label : `${target.label} · ${periodLabel}`} · {axis.label}{" "}
               분해
@@ -183,8 +193,7 @@ export default function BreakdownCard({
               counts[i] ? (
                 <span key={n}>
                   {swatch(n, i)}
-                  {n}
-                  {noteTip(n)} <b>{pct(counts[i], target.total)}</b>
+                  {n} <b>{pct(counts[i], target.total)}</b>
                 </span>
               ) : null,
             )}
@@ -213,7 +222,7 @@ export default function BreakdownCard({
                         {noteTip(n)}
                       </span>
                     </td>
-                    <td className="num">{c ? fmt(c) + target.unit : "—"}</td>
+                    <td className="num">{c ? fmtWon(c, target.unit) : "—"}</td>
                     <td className="num pc">{c ? pct(c, target.total) : "—"}</td>
                     <td
                       className="num"

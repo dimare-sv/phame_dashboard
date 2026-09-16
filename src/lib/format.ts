@@ -1,5 +1,13 @@
 export const fmt = (n: number) => n.toLocaleString("en-US");
 
+/**
+ * "만원" 단위 금액을 사람이 읽기 편하게 — 1억(10,000만원) 넘으면 억으로 전환한다.
+ * "20,234만원" 같은 표기는 실제로 얼마인지 바로 안 읽혀서, 메인 지표 카드(kind: "eok")와
+ * 같은 방식으로 맞춘다.
+ */
+export const fmtWon = (n: number, unit: string) =>
+  unit === "만원" && n >= 10000 ? `${(n / 10000).toFixed(1)}억` : `${fmt(n)}${unit}`;
+
 export const pct = (part: number, total: number, dec = 1) =>
   total === 0 ? "0.0%" : `${((part / total) * 100).toFixed(dec)}%`;
 
