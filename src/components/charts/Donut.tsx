@@ -1,7 +1,7 @@
 "use client";
 
 import { useTooltip } from "@/components/Tooltip";
-import { fmt, pct } from "@/lib/format";
+import { fmt, fmtWon, pct } from "@/lib/format";
 
 interface Props {
   counts: number[];
@@ -90,7 +90,7 @@ export default function Donut({ counts, names, colors, centerSub, tipTitle, unit
           fill="var(--ink)"
           letterSpacing={-1}
         >
-          {fmt(total)}
+          {unit === "만원" ? fmtWon(total, unit) : fmt(total)}
         </text>
         <text x={120} y={136} textAnchor="middle" fontSize={13} fill="var(--muted)">
           {centerSub}
