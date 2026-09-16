@@ -213,6 +213,8 @@ export interface BreakdownAxis {
    * 명도·채도 규칙 밖에 있을 수 있다 — 범례·표에 항상 라벨이 같이 있어야 한다.
    */
   colors?: Record<string, string>;
+  /** 항목 라벨 → 아이콘(이모지). 국가처럼 색보다 아이콘이 더 잘 구분되는 축에 쓴다 */
+  icons?: Record<string, string>;
   /** 대상 id → 이 조합에만 붙는 선행조건 경고 */
   caveats?: Record<string, string>;
 }
@@ -238,6 +240,32 @@ export interface ExtraTable {
   footnote?: string;
   /** 이 축을 보고 있을 때만 표시. 없으면 항상 표시 */
   showOnAxis?: string;
+}
+
+/**
+ * 특정 레이어 번호 밖에 있는 독립 리포트(지금은 마스터 채널) — 원본 리포트의
+ * 요소(KPI 카드·표·추이·YoY·코호트·집중도)만 가져오고, 각 요소의 카드·그리드
+ * 크기는 다른 메뉴에서 쓰는 것과 같은 규격을 쓴다. 월별 고정 데이터라 기간
+ * 필터를 따르지 않는다(카드마다 "기간 필터 비적용" 칩이 붙는다).
+ */
+export interface MasterReportData {
+  asOf: string;
+  kpis: { label: string; value: string; delta: Delta }[];
+  /** 표는 표시용 문자열이지만 차트는 원값이 있어야 그려진다 — 같은 12개월을 숫자로 한 번 더 */
+  series: {
+    months: [string, string, string];
+    active: number[];
+    activeRate: number[];
+    gmv: number[];
+    gmvPerActive: number[];
+  };
+  /** 8레이어의 "레이어 고유 표"와 같은 형식 — ExtraTableCard 로 그대로 그린다 */
+  monthly: ExtraTable;
+  yoyActive: { months: string[]; prevMonths: string[]; cur: number[]; prev: number[] };
+  yoyGmv: { months: string[]; prevMonths: string[]; cur: number[]; prev: number[] };
+  /** 승급월 기준 코호트 — 최근 달일수록 관찰 기간이 짧아 뒤쪽 칸이 null(아직 미도래) */
+  cohorts: { month: string; size: number; values: (number | null)[] }[];
+  top20Share: { months: string[]; values: number[] };
 }
 
 export interface LayerData {
@@ -279,6 +307,8 @@ export interface LayerData {
   breakdown: Breakdown;
   /** 레이어 고유 표. 여러 개를 둘 수 있다 — showOnAxis 로 축에 묶인 표는 그 축일 때만 나온다 */
   extras?: ExtraTable[];
+  /** 이 레이어에만 붙는 완결형 리포트 (지금은 05 공급의 마스터 채널 현황) */
+  masterReport?: MasterReportData;
 }
 
 /** 어댑터가 구현해야 하는 계약. mock / ga4 / db 가 이걸 각각 구현한다. */

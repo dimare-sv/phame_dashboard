@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { useDashboard } from "@/lib/dashboard-context";
 import { captureElement } from "@/lib/capture";
-import { NAV_LAYERS, NAV_MAIN, NAV_REF, titleFor, type NavItem } from "@/lib/nav";
+import { NAV_LAYERS, NAV_MAIN, NAV_REF, NAV_REPORTS, titleFor, type NavItem } from "@/lib/nav";
 import type { PeriodKey } from "@/lib/data/types";
 import { LENSES, LENS_HINT, LENS_LABEL, LENS_SCOPE_NOTE, lensApplies } from "@/lib/segments";
 
@@ -42,8 +42,9 @@ export default function Shell({ children, user, signOut }: ShellProps) {
   const { period, setPeriod, compare, setCompare, lens, setLens, lensScope } = useDashboard();
   const [saving, setSaving] = useState(false);
   const title = titleFor(pathname);
-  /* 참조 화면(지표 사전·설정)은 기간과 무관하다 — 쓸 수 없는 필터를 띄워두지 않는다 */
-  const hasPeriod = !pathname.startsWith("/ref");
+  /* 참조 화면(지표 사전·설정), 마스터 채널(월별 고정 리포트)은 기간과 무관하다 —
+     쓸 수 없는 필터를 띄워두지 않는다 */
+  const hasPeriod = !pathname.startsWith("/ref") && !pathname.startsWith("/master");
 
   async function saveScreen() {
     const canvas = document.querySelector<HTMLElement>(".canvas");
@@ -99,6 +100,13 @@ export default function Shell({ children, user, signOut }: ShellProps) {
           <div className="rail-lbl">레이어</div>
           <nav className="rail-nav" aria-label="레이어">
             {NAV_LAYERS.map((n) => (
+              <RailLink key={n.href} item={n} active={pathname === n.href} />
+            ))}
+          </nav>
+
+          <div className="rail-lbl">리포트</div>
+          <nav className="rail-nav" aria-label="리포트">
+            {NAV_REPORTS.map((n) => (
               <RailLink key={n.href} item={n} active={pathname === n.href} />
             ))}
           </nav>

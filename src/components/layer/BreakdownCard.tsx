@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Card from "@/components/Card";
+import Flag from "@/components/Flag";
 import Donut from "@/components/charts/Donut";
 import { fmt, pct, splitExact } from "@/lib/format";
 import type { Breakdown } from "@/lib/data/types";
@@ -75,6 +76,14 @@ export default function BreakdownCard({
     : CATEGORICAL;
   const caveat = axis.caveats?.[target.id];
 
+  /* 국가처럼 아이콘(국기)이 색보다 더 잘 구분되는 축은 색 점 대신 아이콘을 쓴다 */
+  const swatch = (label: string, i: number) =>
+    axis.icons?.[label] ? (
+      <Flag code={axis.icons[label]} />
+    ) : (
+      <i className="sw" style={{ background: palette[i] }} />
+    );
+
   function pickAxis(id: string) {
     setAxisId(id);
     onAxisChange?.(id);
@@ -141,7 +150,7 @@ export default function BreakdownCard({
             {axis.items.map((n, i) =>
               counts[i] ? (
                 <span key={n}>
-                  <i className="sw" style={{ background: palette[i] }} />
+                  {swatch(n, i)}
                   {n} <b>{pct(counts[i], target.total)}</b>
                 </span>
               ) : null,
@@ -166,7 +175,7 @@ export default function BreakdownCard({
                   <tr key={n}>
                     <td>
                       <span className="nm">
-                        <i className="sw" style={{ background: palette[i] }} />
+                        {swatch(n, i)}
                         {n}
                       </span>
                     </td>

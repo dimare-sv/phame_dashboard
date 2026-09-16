@@ -14,6 +14,7 @@ import type {
   Delta,
   ExtraTable,
   LayerData,
+  MasterReportData,
   PeriodKey,
   PeriodMeta,
   SubTile,
@@ -246,6 +247,8 @@ export interface AxisSpec {
   roleSplit?: boolean;
   /** 항목 라벨 → 고정 색. 가입방식처럼 실제 서비스 브랜드가 있는 축에 쓴다 */
   colors?: Record<string, string>;
+  /** 항목 라벨 → 아이콘(이모지). 국가처럼 색보다 아이콘이 더 잘 구분되는 축에 쓴다 */
+  icons?: Record<string, string>;
   caveats?: Record<string, string>;
 }
 
@@ -266,6 +269,30 @@ export interface ExtraSpec {
   hot?: { col: number; min: number };
   /** {0} {1} … 은 합계 행의 값으로 치환된다. <b> 허용 */
   footnote?: string;
+}
+
+/**
+ * 8레이어 번호 밖에 있는 독립 리포트(지금은 마스터 채널) 명세.
+ * 원본 리포트의 요소(KPI·표·추이·YoY·코호트·집중도)만 가져다 쓴다 — kpis 는
+ * MetricSpec 의 기간·관점 스케일링 없이 그냥 숫자 하나(월별 고정 데이터라서).
+ */
+export interface MasterReportSpec {
+  asOf: string;
+  kpis: {
+    label: string;
+    value: number;
+    kind: Kind;
+    unit?: string;
+    /** kind 가 rate 면 %p, 그 외엔 % 로 읽는다 */
+    d: number;
+    up?: boolean;
+  }[];
+  /** [기준월, 전체 마스터, 활성 마스터, 활성률, 총GMV(억), 활성마스터 1인당 GMV(만원), 상위20% 마스터, 상위20% GMV(억), 상위20% 비중] */
+  monthly: [string, number, number, number, number, number, number, number, number][];
+  monthlyFootnote: string;
+  yoyActive: { months: string[]; prevMonths: string[]; cur: number[]; prev: number[] };
+  yoyGmv: { months: string[]; prevMonths: string[]; cur: number[]; prev: number[] };
+  cohorts: { month: string; size: number; values: (number | null)[] }[];
 }
 
 /* ------------------------------ 관점(렌즈) ------------------------------ */
@@ -342,6 +369,7 @@ export interface LayerSpec {
   targets: TargetSpec[];
   axes: AxisSpec[];
   extras?: ExtraSpec[];
+  masterReport?: MasterReportSpec;
   /** 구매/판매 관점 지원 범위. 생략하면 역할과 무관한 지표로 본다 */
   lens?: LensSpec;
 }
@@ -369,6 +397,7 @@ function buildBreakdown(spec: LayerSpec, p: PeriodKey, lens: Lens): Breakdown {
     ordinal: a.ordinal,
     roleSplit: a.roleSplit,
     colors: a.colors,
+    icons: a.icons,
     caveats: a.caveats,
   }));
 
@@ -433,6 +462,62 @@ function buildExtra(spec: ExtraSpec, p: PeriodKey): ExtraTable {
     total,
     footnote,
     showOnAxis: spec.showOnAxis,
+  };
+}
+
+function buildMasterReport(spec: MasterReportSpec): MasterReportData {
+  const last = spec.monthly.length - 1;
+  const mid = Math.floor(spec.monthly.length / 2);
+
+  const monthlyExtra: ExtraSpec = {
+    title: "마스터 채널 월별 원본 데이터",
+    note: "결제 완료 기준 · 취소·환불 제외",
+    head: [
+      "기준월",
+      "전체 마스터",
+      "활성 마스터",
+      "활성률",
+      "총 GMV",
+      "활성 마스터 1인당 GMV",
+      "상위 20% 마스터",
+      "상위 20% GMV",
+      "상위 20% 비중",
+    ],
+    cols: [
+      { kind: "count", unit: "명" },
+      { kind: "count", unit: "명" },
+      { kind: "rate" },
+      { kind: "eok" },
+      { kind: "manwon" },
+      { kind: "count", unit: "명" },
+      { kind: "eok" },
+      { kind: "rate" },
+    ],
+    rows: spec.monthly,
+    /* 상위 20% 비중(cols 인덱스 7) 이 90% 를 넘는 달을 짚는다 */
+    hot: { col: 7, min: 90 },
+    footnote: spec.monthlyFootnote,
+  };
+
+  return {
+    asOf: spec.asOf,
+    kpis: spec.kpis.map((k) => ({
+      label: k.label,
+      value: fmtValue(k.value, k.kind, k.unit),
+      delta: makeDelta(k.d, k.kind === "rate" ? "rate" : "num1", k.up ?? true, k.kind === "rate" ? "" : "%"),
+    })),
+    series: {
+      months: [spec.monthly[0][0], spec.monthly[mid][0], spec.monthly[last][0]],
+      active: spec.monthly.map((r) => r[2]),
+      activeRate: spec.monthly.map((r) => r[3]),
+      gmv: spec.monthly.map((r) => r[4]),
+      gmvPerActive: spec.monthly.map((r) => r[5]),
+    },
+    monthly: buildExtra(monthlyExtra, "d7"),
+    yoyActive: spec.yoyActive,
+    yoyGmv: spec.yoyGmv,
+    cohorts: spec.cohorts,
+    top20Share: { months: spec.monthly.map((r) => r[0]), values: spec.monthly.map((r) => r[8]) },
   };
 }
 
@@ -517,5 +602,6 @@ export function buildLayer(
     lensNote,
     breakdown: buildBreakdown(spec, p, lens),
     extras: spec.extras?.map((e) => buildExtra(e, p)),
+    masterReport: spec.masterReport ? buildMasterReport(spec.masterReport) : undefined,
   };
 }

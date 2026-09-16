@@ -20,12 +20,15 @@ export const NAV_LAYERS: NavItem[] = [
   { idx: "08", title: "시스템", href: "/layer/system" },
 ];
 
+/** 8레이어 번호 체계 밖에 있는 독립 리포트 — 레이어 안에 끼워 넣지 않고 별도 대메뉴로 둔다 */
+export const NAV_REPORTS: NavItem[] = [{ idx: "★", title: "마스터 채널", href: "/master" }];
+
 export const NAV_REF: NavItem[] = [
   { idx: "▸", title: "지표 사전", href: "/ref/dictionary" },
   { idx: "▸", title: "설정", href: "/ref/settings" },
 ];
 
-const ALL = [...NAV_MAIN, ...NAV_LAYERS, ...NAV_REF];
+const ALL = [...NAV_MAIN, ...NAV_LAYERS, ...NAV_REPORTS, ...NAV_REF];
 
 export function titleFor(pathname: string): string {
   return ALL.find((n) => n.href === pathname)?.title ?? "개요";

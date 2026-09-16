@@ -729,6 +729,15 @@ main {
   flex-shrink: 0;
   display: inline-block;
 }
+.flag-icon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  line-height: 0;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--line);
+}
 
 .hero-sub {
   display: flex;
@@ -1533,6 +1542,52 @@ table.mv td.hot {
   margin: 14px 0 0;
   font-size: 13.5px;
   color: var(--muted);
+}
+
+/* ---------- 마스터 채널 — KPI 카드 그리드 · 2단 차트 그리드 ---------- */
+.mr-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 16px;
+}
+@media (max-width: 1000px) {
+  .mr-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.mr-kpi {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mr-kpi-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.mr-kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--ink);
+}
+
+/* 다른 레이어의 메인 지표 영역(.r-hero)과 같은 2단 그리드 — 차트가 전체 폭을 혼자 쓰지 않게 */
+.mr-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+@media (max-width: 900px) {
+  .mr-charts {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ---------- 지표 사전 ---------- */
