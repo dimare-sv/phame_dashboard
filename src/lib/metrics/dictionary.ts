@@ -133,12 +133,15 @@ export const METRIC_LAYERS: MetricLayer[] = [
       },
       {
         id: "acq-07",
-        name: "친구초대 코드 복사 수",
+        name: "초대가입 전환율",
         segment: "마이페이지 / 미니샵",
-        definition: "초대 의향 행동량. 초대 기능의 노출·발견 정도",
-        calc: "mypage_referral_code_copy + minishop_referral_code_copy",
-        source: "GA4 mypage_referral_code_copy, minishop_referral_code_copy",
-        status: "ga4",
+        definition:
+          "초대 코드 복사가 실제 가입으로 이어지는 비율. 복사 건수 단독으론 바이럴 " +
+          "효과를 못 읽는다는 기획 피드백(2026-09-17)으로 전환율로 바꿨다 — " +
+          "분자(초대 코드로 가입 완료)를 집계하려면 가입 시 사용한 초대 코드가 저장돼야 함",
+        calc: "sign_up WHERE referral_code IS NOT NULL ÷ (mypage_referral_code_copy + minishop_referral_code_copy)",
+        source: "GA4 mypage_referral_code_copy, minishop_referral_code_copy + DB users.referral_code",
+        status: "db",
         direction: "higher",
       },
       {
