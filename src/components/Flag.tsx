@@ -9,9 +9,36 @@ const FLAGS: Record<string, ReactElement> = {
   KR: (
     <svg viewBox="0 0 30 20" width="16" height="11">
       <rect width="30" height="20" fill="#fff" />
-      <g transform="translate(15,10)">
-        <path d="M0,-6 A6,6 0 0,1 0,6 A3,3 0 0,1 0,0 A3,3 0 0,0 0,-6 Z" fill="#C60C30" />
-        <path d="M0,6 A6,6 0 0,1 0,-6 A3,3 0 0,1 0,0 A3,3 0 0,0 0,6 Z" fill="#003478" />
+      {/* 태극 — 이전엔 좌우 위아래로만 나뉜 빨강/파랑 원이라 4괘가 없어서
+          태극기로 안 읽혔다. 대각선으로 돌리고 네 모서리에 건·곤·감·리를 그린다. */}
+      <g transform="translate(15,10) rotate(-33.87)">
+        <path d="M0,-5 A5,5 0 0,1 0,5 A2.5,2.5 0 0,1 0,0 A2.5,2.5 0 0,0 0,-5 Z" fill="#C60C30" />
+        <path d="M0,5 A5,5 0 0,1 0,-5 A2.5,2.5 0 0,1 0,0 A2.5,2.5 0 0,0 0,5 Z" fill="#003478" />
+      </g>
+      {/* 4괘 — 각 획은 가로 막대 3개, 음효(--)는 가운데를 끊는다 */}
+      <g fill="#000">
+        {/* 건(≡) 좌상단 */}
+        <rect x="3" y="2.15" width="5.4" height="0.9" />
+        <rect x="3" y="3.75" width="5.4" height="0.9" />
+        <rect x="3" y="5.35" width="5.4" height="0.9" />
+        {/* 곤(≡≡) 우하단 */}
+        <rect x="21.6" y="12.65" width="2.4" height="0.9" />
+        <rect x="24.6" y="12.65" width="2.4" height="0.9" />
+        <rect x="21.6" y="14.25" width="2.4" height="0.9" />
+        <rect x="24.6" y="14.25" width="2.4" height="0.9" />
+        <rect x="21.6" y="15.85" width="2.4" height="0.9" />
+        <rect x="24.6" y="15.85" width="2.4" height="0.9" />
+        {/* 감(water) 좌하단 — 위·아래 음효, 가운데 양효 */}
+        <rect x="3" y="12.65" width="2.4" height="0.9" />
+        <rect x="5.4" y="12.65" width="2.4" height="0.9" />
+        <rect x="3" y="14.25" width="5.4" height="0.9" />
+        <rect x="3" y="15.85" width="2.4" height="0.9" />
+        <rect x="5.4" y="15.85" width="2.4" height="0.9" />
+        {/* 리(fire) 우상단 — 위·아래 양효, 가운데 음효 */}
+        <rect x="21.6" y="2.15" width="5.4" height="0.9" />
+        <rect x="21.6" y="3.75" width="2.4" height="0.9" />
+        <rect x="24.6" y="3.75" width="2.4" height="0.9" />
+        <rect x="21.6" y="5.35" width="5.4" height="0.9" />
       </g>
     </svg>
   ),

@@ -1178,10 +1178,11 @@ table.cohort td.lead span {
 
 /* ---------- L1 : 서브 지표 ---------- */
 .subtiles {
-  /* 그리드로 열을 고정하면 지표 개수가 열 수의 배수가 아닐 때 마지막 줄에
-     회색 빈 칸이 남는다. flex 로 두면 마지막 줄 항목이 늘어나 빈 칸이 안 생긴다. */
-  display: flex;
-  flex-wrap: wrap;
+  /* 열 수를 --sub-cols(= 지표 개수/2 올림)로 고정한다. 위·아래 줄 항목 수가
+     다르면 아래 줄 남는 칸은 늘어나지 않고 빈 칸(줄 색)으로 남는다 —
+     그래야 모든 타일 너비가 줄과 상관없이 통일된다. */
+  display: grid;
+  grid-template-columns: repeat(var(--sub-cols, 4), minmax(0, 1fr));
   gap: 1px;
   background: var(--line);
   border: 1px solid var(--line);
@@ -1189,15 +1190,23 @@ table.cohort td.lead span {
   overflow: hidden;
   box-shadow: var(--shadow);
 }
+@media (max-width: 900px) {
+  .subtiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .subtiles {
+    grid-template-columns: 1fr;
+  }
+}
 .subtile {
-  /* 두 줄로 균등하게 나뉘도록 --sub-cols(= 지표 개수/2 올림)만큼 열을 만든다.
-     좁은 화면에서는 190px 아래로 줄지 않아 원래대로 더 잘게 줄바꿈된다. */
-  flex: 1 1 max(190px, calc(100% / var(--sub-cols, 4) - 1px));
   background: var(--card);
   padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 3px;
+  min-width: 0;
 }
 .subtile:hover {
   background: var(--card-2);
