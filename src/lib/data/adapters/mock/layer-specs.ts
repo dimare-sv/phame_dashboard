@@ -153,7 +153,9 @@ export const LAYER_SPECS: LayerSpec[] = [
     idx: "02",
     title: "활성",
     eyebrow: "기능 활성률",
-    define: "활성 유저 중 핵심 기능을 1개 이상 쓴 비율 · L3",
+    /* "핵심 기능" 범위 확정(2026-09-17): 5개 기능영역(홈·피드·미니샵·채팅·검색) 전부 —
+       axis "feat" 목록과 동일. 앱을 켜서 무엇이든 하나라도 쓰면 활성으로 카운트한다. */
+    define: "활성 유저 중 핵심 기능(홈·피드·미니샵·채팅·검색)을 1개 이상 쓴 비율 · L3",
     metricId: "active-01",
     mainUnit: "%",
     mainDecimals: 1,
@@ -413,6 +415,8 @@ export const LAYER_SPECS: LayerSpec[] = [
     subs: [
       { name: "D1 리텐션", kind: "rate", v: 41.2, vp: [41.8, 41.2, 40.4], d: [1.2, 0.8, 1.9] },
       { name: "D30 리텐션", kind: "rate", v: 15.4, vp: [15.8, 15.4, 14.8], d: [0.6, 0.4, 1.2] },
+      /* 기준일수 확정(2026-09-17): 마지막 방문 후 30일+ 무방문 — 아래 "이탈 위험군 세그먼트" 표의
+         "장기 미방문 (30일+)" 행과 동일 기준. */
       { name: "이탈 위험군", kind: "count", unit: "명", v: 1840, vp: [1780, 1840, 1960], d: [-2.4, -1.8, 3.2], up: false },
       { name: "복귀 유저", kind: "count", unit: "명", v: 1990, flow: true, d: [4.2, 6.8, 11.4] },
       { name: "평균 방문 주기", kind: "days", v: 4.2, vp: [4.0, 4.2, 4.5], d: [-0.2, -0.1, 0.3], up: false },
@@ -785,7 +789,9 @@ export const LAYER_SPECS: LayerSpec[] = [
     idx: "06",
     title: "신뢰·품질",
     eyebrow: "CS 첫응답 시간",
-    define: "문의 접수 → 첫 응답까지 · 영업시간 기준",
+    /* 영업시간 확정(2026-09-17): 평일 09-18시만 집계. 그 외 시간 접수 건은
+       다음 영업 시작 시각부터 응답 시간을 센다 — CS팀 협의 필요시 재조정. */
+    define: "문의 접수 → 첫 응답까지 · 영업시간(평일 09-18시) 기준",
     metricId: "trust-06",
     mainUnit: "분",
     mainDecimals: 0,
