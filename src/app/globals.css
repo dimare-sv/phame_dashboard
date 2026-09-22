@@ -1440,30 +1440,6 @@ table.bd .nm {
 table.bd .pc {
   color: var(--muted);
 }
-/* 비중 열 — 도넛 조각 색을 그대로 가져와 표에서도 숫자만이 아니라 크기로
-   비교되게 한다. 도넛만으로는 34.2%와 31.8% 같은 근접한 조각을 눈으로
-   가르기 어렵다는 게 파이·도넛 차트의 잘 알려진 한계다. */
-.pc-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: flex-end;
-}
-.pc-track {
-  position: relative;
-  display: block;
-  width: 48px;
-  height: 5px;
-  background: var(--card-2);
-  border-radius: 100px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.pc-fill {
-  display: block;
-  height: 100%;
-  border-radius: 100px;
-}
 
 .stock-note {
   display: inline-flex;

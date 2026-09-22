@@ -223,24 +223,7 @@ export default function BreakdownCard({
                       </span>
                     </td>
                     <td className="num">{c ? fmtWon(c, target.unit) : "—"}</td>
-                    <td className="num pc">
-                      {c ? (
-                        <span className="pc-cell">
-                          <i className="pc-track">
-                            <i
-                              className="pc-fill"
-                              style={{
-                                width: `${Math.min(100, (c / target.total) * 100).toFixed(1)}%`,
-                                background: palette[i],
-                              }}
-                            />
-                          </i>
-                          {pct(c, target.total)}
-                        </span>
-                      ) : (
-                        "—"
-                      )}
-                    </td>
+                    <td className="num pc">{c ? pct(c, target.total) : "—"}</td>
                     <td
                       className="num"
                       style={{ color: axis.deltas[i]?.good ? "var(--good)" : "var(--crit)" }}
