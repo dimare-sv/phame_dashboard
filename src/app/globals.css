@@ -1232,19 +1232,11 @@ table.cohort td.lead span {
 }
 .subtile {
   background: var(--card);
-  padding: 14px 16px 14px 13px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
-  /* 좋아지는 중인지 나빠지는 중인지 숫자를 읽기 전에 색으로 먼저 걸리게 한다 */
-  border-left: 3px solid transparent;
-}
-.subtile.sg {
-  border-left-color: var(--good);
-}
-.subtile.sb {
-  border-left-color: var(--crit);
 }
 .subtile:hover {
   background: var(--card-2);

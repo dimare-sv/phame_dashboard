@@ -143,7 +143,7 @@ export default function LayerPage() {
         style={{ "--sub-cols": Math.ceil(data.subs.length / 2) || 1 } as CSSProperties}
       >
         {data.subs.map((s) => (
-          <div className={`subtile ${s.delta.good ? "sg" : "sb"}`} key={s.name}>
+          <div className="subtile" key={s.name}>
             <span className="sn">
               {s.name}
               <InfoTip metricId={s.metricId} />
