@@ -144,7 +144,7 @@ export default function TrendChart({
             strokeLinejoin="round"
             opacity={0.75}
           />
-          <g className="mono" fontSize={11.5}>
+          <g fontSize={11.5}>
             <line x1={X1 - 82} y1={9} x2={X1 - 68} y2={9} stroke="var(--s-keep)" strokeWidth={2.5} />
             <text x={X1 - 62} y={12.5} fill="var(--muted)">
               이번 기간
