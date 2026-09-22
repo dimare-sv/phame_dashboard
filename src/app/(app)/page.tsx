@@ -124,7 +124,7 @@ export default function OverviewPage() {
           </div>
         </Card>
 
-        <FunnelCard stages={data.funnel} periodLabel={data.period.label} />
+        <FunnelCard stages={data.funnel} periodLabel={data.period.label} layout="stacked" />
       </div>
 
       <div className="r-split">

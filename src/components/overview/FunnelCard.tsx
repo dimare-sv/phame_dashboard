@@ -7,15 +7,18 @@ import { fmt } from "@/lib/format";
 import type { FunnelStage } from "@/lib/data/types";
 
 /**
- * 가로로 좁아지는 깔때기.
+ * 결제 퍼널 — 카드 폭에 따라 두 가지 형태를 쓴다.
  *
- * 단색 파랑 하나로만 4단계를 칠하면 "그냥 파란 도형" 으로만 보이고 숫자가
- * 눈에 안 들어온다는 피드백(2026-09-22) — 같은 남색 계열 안에서 대비를
- * 키우고, 각 단계 비중을 배지로 박아 넣어 색과 숫자가 바로 이어지게 한다.
- * 이벤트명(view_item 등)은 기획 판단에 필요 없는 개발 정보라 기본 노출에서
- * 빼고 호버 툴팁으로만 남긴다.
+ * - "stacked" (개요 L0): 카드가 좁아 단계를 세로로 쌓는다. 가로 깔때기를
+ *   좁은 폭에 욱여넣으면 단계마다 너무 얇아져 오히려 안 읽힌다(2026-09-22).
+ * - "funnel" (전환 레이어): 카드가 넓어 단계 4개를 가로로 나란히 두고
+ *   값 비율만큼 좁아지는 다각형을 이어 붙인다. 좁은 폭에서 쓰던 것과 달리
+ *   여기서는 폭이 넓을수록 깔때기가 커 보일 뿐 빈 여백이 남지 않는다.
+ *   같은 남색 계열 안에서 대비를 키우고 비중 배지를 박아 색과 숫자를
+ *   바로 잇는다.
  */
 const RAMP = ["#8fb7ea", "#5590d8", "#2c66ac", "#123566"];
+const STEP_NAMES = ["장바구니 전환", "결제 진입", "결제 완료"];
 
 const X0 = 46;
 const X1 = 854;
@@ -33,11 +36,70 @@ export default function FunnelCard({
   periodLabel,
   title = "결제 퍼널",
   footnote,
+  layout = "funnel",
 }: {
   stages: FunnelStage[];
   periodLabel: string;
   title?: string;
   /** 표 아래 한 줄 해설. <b> 허용 */
+  footnote?: string;
+  /** "stacked" = 세로로 쌓는 좁은 카드용, "funnel" = 가로로 좁아지는 넓은 카드용 */
+  layout?: "stacked" | "funnel";
+}) {
+  const top = stages[0].value;
+  const steps = stages.slice(0, -1).map((s, i) => (stages[i + 1].value / s.value) * 100);
+  /* 가장 많이 빠지는 구간 하나만 강조한다 — 전부 칠하면 어디를 볼지 알 수 없다 */
+  const worst = steps.indexOf(Math.min(...steps));
+  const endToEnd = (stages[stages.length - 1].value / top) * 100;
+
+  if (layout === "stacked") {
+    return (
+      <Card title={title} note={periodLabel}>
+        <div className="funnel">
+          {stages.map((s, i) => (
+            <div key={s.event}>
+              <div className="fn-stage">
+                <div className="fn-top">
+                  <span className="fn-name">{s.name}</span>
+                  <span className="fn-ev mono">{s.event}</span>
+                  <span className="fn-val num">{fmt(s.value)}</span>
+                </div>
+                <div className="fn-bar">
+                  <i style={{ width: `${((s.value / top) * 100).toFixed(1)}%` }} />
+                </div>
+              </div>
+              {i < stages.length - 1 && (
+                <div className={`fn-step${i === worst ? " bad" : ""}`}>
+                  <span className="arrow">↳</span>
+                  {STEP_NAMES[i]} <b>{steps[i].toFixed(1)}%</b>
+                  {i === worst && " · 가장 큰 이탈"}
+                  {stages[i + 1].avgTime && <span className="fn-time">평균 {stages[i + 1].avgTime} 소요</span>}
+                </div>
+              )}
+            </div>
+          ))}
+          <div className="fn-foot">
+            <span>전체 전환율</span>
+            <b className="num">{endToEnd.toFixed(1)}%</b>
+          </div>
+          {footnote && <p className="mv-note" dangerouslySetInnerHTML={{ __html: footnote }} />}
+        </div>
+      </Card>
+    );
+  }
+
+  return <FunnelWide stages={stages} periodLabel={periodLabel} title={title} footnote={footnote} />;
+}
+
+function FunnelWide({
+  stages,
+  periodLabel,
+  title,
+  footnote,
+}: {
+  stages: FunnelStage[];
+  periodLabel: string;
+  title: string;
   footnote?: string;
 }) {
   const { show, hide } = useTooltip();
@@ -48,7 +110,6 @@ export default function FunnelCard({
   const segW = (X1 - X0) / n;
   const h = (v: number) => (v / top) * MAX_H;
   const steps = stages.slice(0, -1).map((s, i) => (stages[i + 1].value / s.value) * 100);
-  /* 가장 많이 빠지는 구간 하나만 강조한다 — 전부 칠하면 어디를 볼지 알 수 없다 */
   const worst = steps.indexOf(Math.min(...steps));
   const endToEnd = (stages[n - 1].value / top) * 100;
 
@@ -185,7 +246,7 @@ export default function FunnelCard({
           })}
         </svg>
       </div>
-      <div className="fn-foot">
+      <div className="fn2-foot">
         <span>전체 전환율</span>
         <b className="num">{endToEnd.toFixed(1)}%</b>
       </div>
