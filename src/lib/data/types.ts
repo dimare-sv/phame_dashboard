@@ -104,6 +104,8 @@ export interface FunnelStage {
   name: string;
   event: string;
   value: number;
+  /** 다음 단계로 넘어가기까지 평균 소요 시간 — 마지막 단계는 없음 */
+  avgTime?: string;
 }
 
 export interface CohortRow {
@@ -226,6 +228,30 @@ export interface Breakdown {
   axes: BreakdownAxis[];
 }
 
+/** TOP10 랭킹 한 줄 */
+export interface LeaderboardRow {
+  rank: number;
+  name: string;
+  /** 이름 아래 보조 표기 — 등급, 카테고리 같은 것 */
+  sub?: string;
+  value: string;
+  /** 막대 길이 계산용 — 목록 내 최댓값 대비 0~1 */
+  raw: number;
+  delta?: Delta;
+}
+
+/** 매출 상위 마스터, 리텐션 낮은 마스터 같은 TOP10 랭킹 카드 */
+export interface Leaderboard {
+  title: string;
+  note?: string;
+  /** 기간 필터를 따르지 않는 스냅샷이라 붙는 칩 — "최근 28일 기준" */
+  fixedChip?: string;
+  /** "리텐션 낮은 마스터"처럼 순위가 곧 위험 신호인 목록은 막대를 경고색으로 */
+  tone?: "warn";
+  rows: LeaderboardRow[];
+  footnote?: string;
+}
+
 /**
  * 레이어마다 하나씩 붙는 고유 표.
  * (획득의 등급 승급 처리, 전환의 결제 실패 사유 …)
@@ -296,6 +322,11 @@ export interface LayerData {
     /** 좌 / 중 / 우 3개만 찍는다 — 12개를 다 찍으면 읽히지 않는다 */
     labels: [string, string, string];
     series: number[];
+    /**
+     * 직전 기간의 같은 길이 추이 — 같은 차트 위에 연한 선으로 겹쳐 그린다.
+     * 숫자로만 보던 전기 대비를 궤적으로 비교하기 위한 것.
+     */
+    prevSeries?: number[];
     unit: string;
     decimals: number;
     /**
@@ -311,6 +342,10 @@ export interface LayerData {
   extras?: ExtraTable[];
   /** 이 레이어에만 붙는 완결형 리포트 (지금은 05 공급의 마스터 채널 현황) */
   masterReport?: MasterReportData;
+  /** 단계별 이탈을 보여주는 퍼널 (지금은 03 전환) — 개요의 결제 퍼널과 같은 숫자 */
+  funnel?: { stages: FunnelStage[]; footnote?: string };
+  /** TOP10 랭킹 카드 (지금은 05 공급의 매출 상위 · 리텐션 낮은 마스터) */
+  leaderboards?: Leaderboard[];
 }
 
 /** 어댑터가 구현해야 하는 계약. mock / ga4 / db 가 이걸 각각 구현한다. */

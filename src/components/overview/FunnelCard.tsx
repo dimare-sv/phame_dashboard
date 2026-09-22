@@ -7,9 +7,14 @@ const STEP_NAMES = ["장바구니 전환", "결제 진입", "결제 완료"];
 export default function FunnelCard({
   stages,
   periodLabel,
+  title = "결제 퍼널",
+  footnote,
 }: {
   stages: FunnelStage[];
   periodLabel: string;
+  title?: string;
+  /** 표 아래 한 줄 해설. <b> 허용 */
+  footnote?: string;
 }) {
   const top = stages[0].value;
   const steps = stages.slice(0, -1).map((s, i) => (stages[i + 1].value / s.value) * 100);
@@ -17,7 +22,7 @@ export default function FunnelCard({
   const worst = steps.indexOf(Math.min(...steps));
 
   return (
-    <Card title="결제 퍼널" note={periodLabel}>
+    <Card title={title} note={periodLabel}>
       <div className="funnel">
         {stages.map((s, i) => (
           <div key={s.event}>
@@ -36,6 +41,7 @@ export default function FunnelCard({
                 <span className="arrow">↳</span>
                 {STEP_NAMES[i]} <b>{steps[i].toFixed(1)}%</b>
                 {i === worst && " · 가장 큰 이탈"}
+                {s.avgTime && <span className="fn-time">평균 {s.avgTime} 소요</span>}
               </div>
             )}
           </div>
@@ -44,6 +50,7 @@ export default function FunnelCard({
           <span>전체 전환율</span>
           <b className="num">{((stages[stages.length - 1].value / top) * 100).toFixed(1)}%</b>
         </div>
+        {footnote && <p className="mv-note" dangerouslySetInnerHTML={{ __html: footnote }} />}
       </div>
     </Card>
   );

@@ -6,6 +6,10 @@ import { fmt } from "@/lib/format";
 
 interface Props {
   series: number[];
+  /** 직전 기간의 같은 길이 궤적 — 있으면 연한 점선으로 겹쳐 그린다 */
+  prevSeries?: number[];
+  /** 겹친 선의 범례 문구 — "직전 7일" */
+  prevLabel?: string;
   /** 좌 / 중 / 우 3개만 찍는다 — 12개를 다 찍으면 읽히지 않는다 */
   labels: [string, string, string];
   unit: string;
@@ -20,19 +24,30 @@ const X1 = 884;
 const BASE = 156;
 const TOP = 16;
 
-export default function TrendChart({ series, labels, unit, decimals, kind, ariaLabel }: Props) {
+export default function TrendChart({
+  series,
+  prevSeries,
+  prevLabel,
+  labels,
+  unit,
+  decimals,
+  kind,
+  ariaLabel,
+}: Props) {
   const { show, hide } = useTooltip();
   const [hover, setHover] = useState<number | null>(null);
 
   const last = series.length - 1;
   const txt = (v: number) => (decimals === 0 ? fmt(Math.round(v)) : v.toFixed(decimals)) + unit;
 
+  /* 겹친 직전 기간 선도 같은 축에 들어와야 잘리지 않는다 */
+  const all = prevSeries && prevSeries.length === series.length ? [...series, ...prevSeries] : series;
   /* 막대는 반드시 0에서 시작한다. 선은 값의 범위를 조금 넓혀 잡는다. */
-  const lo = kind === "bar" ? 0 : Math.min(...series) - (Math.max(...series) - Math.min(...series)) * 0.6;
+  const lo = kind === "bar" ? 0 : Math.min(...all) - (Math.max(...all) - Math.min(...all)) * 0.6;
   const rawHi =
     kind === "bar"
-      ? Math.max(...series) * 1.12
-      : Math.max(...series) + (Math.max(...series) - Math.min(...series)) * 0.3;
+      ? Math.max(...all) * 1.12
+      : Math.max(...all) + (Math.max(...all) - Math.min(...all)) * 0.3;
   /* 비율 축에 100%를 넘는 눈금을 찍지 않는다 */
   const hi = unit === "%" ? Math.min(rawHi, 100) : rawHi;
 
@@ -42,6 +57,8 @@ export default function TrendChart({ series, labels, unit, decimals, kind, ariaL
   const bw = Math.min(slot - 10, 46);
 
   const line = series.map((v, i) => `${cx(i).toFixed(1)},${y(v).toFixed(1)}`);
+  const hasPrev = prevSeries && prevSeries.length === series.length;
+  const prevLine = hasPrev ? prevSeries!.map((v, i) => `${cx(i).toFixed(1)},${y(v).toFixed(1)}`) : null;
 
   return (
     <svg
@@ -113,6 +130,41 @@ export default function TrendChart({ series, labels, unit, decimals, kind, ariaL
             opacity={i === last ? 1 : 0.72}
           />
         ))}
+
+      {/* 직전 기간 궤적 — 숫자(vp)로만 보던 전기 대비를 같은 차트 위에서 비교한다 */}
+      {hasPrev && (
+        <>
+          <polyline
+            points={prevLine!.join(" ")}
+            fill="none"
+            stroke="var(--muted)"
+            strokeWidth={1.75}
+            strokeDasharray="5 4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.75}
+          />
+          <g className="mono" fontSize={11.5}>
+            <line x1={X1 - 82} y1={9} x2={X1 - 68} y2={9} stroke="var(--s-keep)" strokeWidth={2.5} />
+            <text x={X1 - 62} y={12.5} fill="var(--muted)">
+              이번 기간
+            </text>
+            <line
+              x1={X1 - 82}
+              y1={22}
+              x2={X1 - 68}
+              y2={22}
+              stroke="var(--muted)"
+              strokeWidth={1.75}
+              strokeDasharray="5 4"
+              opacity={0.75}
+            />
+            <text x={X1 - 62} y={25.5} fill="var(--muted)">
+              {prevLabel ?? "직전 기간"}
+            </text>
+          </g>
+        </>
+      )}
 
       <line x1={X0} y1={BASE} x2={X1} y2={BASE} stroke="var(--line)" strokeWidth={1} />
 

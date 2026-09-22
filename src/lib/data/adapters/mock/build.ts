@@ -13,7 +13,9 @@ import type {
   BreakdownAxis,
   Delta,
   ExtraTable,
+  FunnelStage,
   LayerData,
+  Leaderboard,
   MasterReportData,
   PeriodKey,
   PeriodMeta,
@@ -353,6 +355,49 @@ function lensTarget(t: TargetSpec, lens: Lens, ls?: LensSpec): TargetSpec {
   };
 }
 
+/** 03 전환의 퍼널 — 개요의 "결제 퍼널"과 같은 원본(funnel-data.ts)을 가리킨다 */
+export interface FunnelSpec {
+  stages: readonly { name: string; event: string; avgTime?: string }[];
+  values: Record<PeriodKey, number[]>;
+  footnote?: string;
+}
+
+export interface LeaderboardSpec {
+  title: string;
+  note?: string;
+  /** 기간 필터를 따르지 않는 스냅샷 기준 — "최근 28일 기준" */
+  asOf: string;
+  kind: Kind;
+  unit?: string;
+  /** true면 값이 작을수록 상위 — 리텐션 낮은 마스터처럼 */
+  ascending?: boolean;
+  /** "리텐션 낮은 마스터"처럼 순위가 곧 위험 신호인 목록은 막대를 경고색으로 */
+  tone?: "warn";
+  rows: { name: string; sub?: string; value: number }[];
+  footnote?: string;
+}
+
+function buildLeaderboard(spec: LeaderboardSpec): Leaderboard {
+  const sorted = [...spec.rows]
+    .sort((a, b) => (spec.ascending ? a.value - b.value : b.value - a.value))
+    .slice(0, 10);
+  const max = Math.max(...sorted.map((r) => Math.abs(r.value)), 1);
+  return {
+    title: spec.title,
+    note: spec.note,
+    fixedChip: spec.asOf,
+    tone: spec.tone,
+    rows: sorted.map((r, i) => ({
+      rank: i + 1,
+      name: r.name,
+      sub: r.sub,
+      value: fmtValue(r.value, spec.kind, spec.unit),
+      raw: Math.abs(r.value) / max,
+    })),
+    footnote: spec.footnote,
+  };
+}
+
 export interface LayerSpec {
   id: string;
   idx: string;
@@ -372,6 +417,8 @@ export interface LayerSpec {
   axes: AxisSpec[];
   extras?: ExtraSpec[];
   masterReport?: MasterReportSpec;
+  funnel?: FunnelSpec;
+  leaderboards?: LeaderboardSpec[];
   /** 구매/판매 관점 지원 범위. 생략하면 역할과 무관한 지표로 본다 */
   lens?: LensSpec;
 }
@@ -559,6 +606,15 @@ export function buildLayer(
 
   const capped = k === "rate" || k === "rate2";
   const series = makeSeries(metricValue(mainSpec, p), relativeDelta(mainSpec, p), spec.id + p + lens, 12, capped);
+  /*
+   * 직전 기간 궤적 — 숫자 하나(vp)로만 비교하던 전기 대비를 차트 위에서도 보이게 한다.
+   * 정확한 과거 추이가 아니라, "지금 값 ÷ (1+증감률)" 을 끝점으로 삼은 근사 궤적이다.
+   * 시드를 다르게 줘서 모양은 갈라지되 끝점은 실제 비교값과 맞는다.
+   */
+  const relD = relativeDelta(mainSpec, p);
+  const prevEnd =
+    Math.abs(1 + relD / 100) > 1e-6 ? metricValue(mainSpec, p) / (1 + relD / 100) : metricValue(mainSpec, p);
+  const prevSeries = makeSeries(prevEnd, relD, `${spec.id}${p}${lens}prev`, 12, capped);
 
   /* 차트 종류는 **지표**의 성질이지 기간의 성질이 아니다.
      기간을 바꿀 때마다 막대가 선으로 바뀌면 같은 지표로 안 읽힌다.
@@ -596,6 +652,7 @@ export function buildLayer(
       granularity: gran.label,
       labels: gran.labels,
       series,
+      prevSeries,
       unit: trendUnit,
       decimals: trendDec,
       kind,
@@ -606,5 +663,12 @@ export function buildLayer(
     breakdown: buildBreakdown(spec, p, lens),
     extras: spec.extras?.map((e) => buildExtra(e, p)),
     masterReport: spec.masterReport ? buildMasterReport(spec.masterReport) : undefined,
+    funnel: spec.funnel
+      ? {
+          stages: spec.funnel.stages.map((s, i) => ({ ...s, value: spec.funnel!.values[p][i] })) as FunnelStage[],
+          footnote: spec.funnel.footnote,
+        }
+      : undefined,
+    leaderboards: spec.leaderboards?.map(buildLeaderboard),
   };
 }

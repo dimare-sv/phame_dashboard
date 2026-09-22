@@ -8,6 +8,8 @@ import Stub from "@/components/Stub";
 import TrendChart from "@/components/charts/TrendChart";
 import BreakdownCard from "@/components/layer/BreakdownCard";
 import ExtraTableCard from "@/components/layer/ExtraTableCard";
+import LeaderboardCard from "@/components/layer/LeaderboardCard";
+import FunnelCard from "@/components/overview/FunnelCard";
 import InfoTip from "@/components/InfoTip";
 import { useDashboard } from "@/lib/dashboard-context";
 import { useDashboardData } from "@/lib/use-dashboard-data";
@@ -122,6 +124,8 @@ export default function LayerPage() {
           <div className="chart-wrap">
             <TrendChart
               series={data.trend.series}
+              prevSeries={data.trend.prevSeries}
+              prevLabel={cmpLabel(data.period)}
               labels={data.trend.labels}
               unit={data.trend.unit}
               decimals={data.trend.decimals}
@@ -151,6 +155,18 @@ export default function LayerPage() {
         ))}
       </div>
 
+      {data.funnel && (
+        <>
+          <Band label="퍼널" hint="어느 단계에서 얼마나 빠지는지" />
+          <FunnelCard
+            stages={data.funnel.stages}
+            periodLabel={data.period.label}
+            title={`${m.eyebrow} 퍼널`}
+            footnote={data.funnel.footnote}
+          />
+        </>
+      )}
+
       <Band label="분해" hint="대상을 고르고, 어떤 축으로 쪼갤지 고릅니다" />
       <BreakdownCard
         /* 레이어가 바뀌면 대상·축 선택을 초기화한다 */
@@ -163,6 +179,17 @@ export default function LayerPage() {
       {extras.map((t) => (
         <ExtraTableCard key={t.title} table={t} />
       ))}
+
+      {data.leaderboards && data.leaderboards.length > 0 && (
+        <>
+          <Band label="TOP10" hint="개별 대상을 짚어서 봅니다" />
+          <div className="lb-split">
+            {data.leaderboards.map((b) => (
+              <LeaderboardCard key={b.title} board={b} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

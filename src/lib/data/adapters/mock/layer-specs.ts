@@ -7,6 +7,7 @@
  */
 import { MEMBER_GRADE_LABELS, SELLER_GRADE_LABELS } from "@/lib/segments";
 import type { LayerSpec } from "./build";
+import { FUNNEL_CAVEAT, FUNNEL_STAGES, FUNNEL_VALUES } from "./funnel-data";
 
 const STOCK_CAVEAT =
   "<b>이 조합은 선행 조건이 있습니다.</b> 누적 회원을 유입채널로 쪼개려면 " +
@@ -414,6 +415,10 @@ export const LAYER_SPECS: LayerSpec[] = [
           "집계되지 않습니다</b> — order_type(일반/정기/선물) 파라미터 추가가 필요합니다.",
       },
     ],
+    /* 개요(L0) "결제 퍼널" 카드와 같은 원본(funnel-data.ts)을 그대로 쓴다 —
+       단계별 이탈이 어디서 크게 나는지는 전환 레이어에서 기간·직전 구간과
+       같이 봐야 더 쓸모 있다는 기획 피드백(2026-09-22)으로 여기에도 노출한다. */
+    funnel: { stages: FUNNEL_STAGES, values: FUNNEL_VALUES, footnote: FUNNEL_CAVEAT },
   },
 
   /* ================================ 04 유지 ================================ */
@@ -739,6 +744,55 @@ export const LAYER_SPECS: LayerSpec[] = [
         footnote:
           "<b>상위 10곳이 GMV 의 61.8%</b>입니다. 이 중 둘이 떠나면 거래액이 두 자리수로 빠집니다 — " +
           "GMV 가 늘어도 이 비중이 같이 오르면 성장이 아니라 <b>위험이 쌓이는 중</b>입니다.",
+      },
+    ],
+    /* TOP10 랭킹 2종(2026-09-22 기획 피드백) — "얼마나" 는 위 분해 도넛에 이미 있으니,
+       여기서는 "누구" 를 짚는다. 개별 마스터명이 나가는 화면이라 masterReport 처럼
+       기간 필터 비적용 스냅샷으로 둔다. */
+    leaderboards: [
+      {
+        title: "매출 상위 마스터 TOP10",
+        note: "실적 데이터",
+        asOf: "최근 28일 기준",
+        kind: "manwon",
+        rows: [
+          { name: "글로우드림", sub: "파매니악", value: 8420 },
+          { name: "소이연구소", sub: "파매니악", value: 7150 },
+          { name: "뷰티멜로", sub: "마스터", value: 6830 },
+          { name: "리브스킨", sub: "마스터", value: 6120 },
+          { name: "어반코스메틱", sub: "마스터", value: 5640 },
+          { name: "라피네뷰티", sub: "마스터", value: 5280 },
+          { name: "스킨투스킨", sub: "프리마스터", value: 4960 },
+          { name: "포레스트뷰", sub: "마스터", value: 4510 },
+          { name: "메종드피부", sub: "프리마스터", value: 4180 },
+          { name: "클린로즈", sub: "프리마스터", value: 3940 },
+        ],
+        footnote:
+          "상위 10명이 <b>이 구간 전체 GMV의 상당 부분</b>을 차지합니다 — " +
+          "위 \"판매자 집중도\" 표의 상위 10곳과 같은 층입니다.",
+      },
+      {
+        title: "리텐션 낮은 마스터",
+        note: "개설 3개월 이상 · M3 유지율 기준",
+        asOf: "2026년 5월 기준",
+        kind: "rate",
+        ascending: true,
+        tone: "warn",
+        rows: [
+          { name: "코튼베일", sub: "프리마스터", value: 18.2 },
+          { name: "선셋오일랩", sub: "프리마스터", value: 21.4 },
+          { name: "베어스킨", sub: "마스터", value: 24.6 },
+          { name: "허니듀랩", sub: "프리마스터", value: 26.8 },
+          { name: "모먼트코스", sub: "마스터", value: 28.1 },
+          { name: "퓨어웰라이프", sub: "프리마스터", value: 29.6 },
+          { name: "블룸베이스", sub: "마스터", value: 31.2 },
+          { name: "오르에센스", sub: "프리마스터", value: 32.4 },
+          { name: "테라코스", sub: "마스터", value: 33.8 },
+          { name: "이든슬립", sub: "프리마스터", value: 35.1 },
+        ],
+        footnote:
+          "전체 M3 유지율(위 \"판매자 리텐션\" 표 참고)보다 크게 낮은 10명입니다 — " +
+          "개설 초기 지원(온보딩 상담·수수료 프로모션)의 우선 대상입니다.",
       },
     ],
     /* 기획팀이 별도로 돌리던 "활성 마스터 현황" 리포트를 그대로 옮긴 섹션.

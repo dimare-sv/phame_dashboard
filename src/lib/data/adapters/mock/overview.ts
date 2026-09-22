@@ -8,6 +8,7 @@ import type { OverviewData, PeriodKey, PlatformData, Tile } from "../../types";
 import { LAYER_SPECS } from "./layer-specs";
 import { PERIODS, lensMetric, makeSeries, metricValue, relativeDelta, renderMetric, trendFormat } from "./build";
 import { lensApplies, type Lens } from "@/lib/segments";
+import { FUNNEL_STAGES, FUNNEL_VALUES } from "./funnel-data";
 
 const P_INDEX: Record<PeriodKey, 0 | 1 | 2> = { d1: 0, d7: 1, d28: 2 };
 
@@ -73,19 +74,6 @@ const COHORT: OverviewData["cohort"] = [
   { week: "9/01", size: 1510, values: [43, 31, null, null, null] },
   { week: "9/08", size: 1204, values: [44, null, null, null, null] },
 ];
-
-const FUNNEL_STAGES = [
-  { name: "상품 상세 조회", event: "view_item" },
-  { name: "장바구니 담기", event: "add_to_cart" },
-  { name: "결제 시작", event: "begin_checkout" },
-  { name: "결제 완료", event: "purchase" },
-];
-
-const FUNNEL_VALUES: Record<PeriodKey, number[]> = {
-  d1: [6880, 2064, 1176, 929],
-  d7: [48200, 14460, 8240, 6510],
-  d28: [192400, 55800, 32360, 25890],
-};
 
 /**
  * 레이어 메인 지표가 아니면서 임계 감시가 필요한 것들.
