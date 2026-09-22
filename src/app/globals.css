@@ -941,14 +941,74 @@ main {
   }
 }
 
-/* funnel — 가로로 좁아지는 다각형. 카드 폭이 넓어질수록 깔때기가 커질 뿐
-   빈 여백으로 남지 않도록, 단계 4개를 세로로 쌓지 않고 가로로 나란히 둔다. */
-.fn2-wrap {
-  padding: 8px 12px 0;
+/* funnel */
+.funnel {
+  padding: 8px 18px 18px;
+  display: flex;
+  flex-direction: column;
+}
+.fn-stage {
+  padding: 11px 0 0;
+}
+.fn-top {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+}
+.fn-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.fn-ev {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--faint);
+}
+.fn-val {
+  margin-left: auto;
+  font-size: 16px;
+  font-weight: 700;
+}
+.fn-bar {
+  height: 26px;
+  background: var(--card-2);
+  border: 1px solid var(--line-soft);
+  border-radius: 3px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+.fn-bar i {
+  display: block;
+  height: 100%;
+  background: var(--s-keep);
+}
+.fn-step {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 0 0 12px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.fn-step .arrow {
+  color: var(--faint);
+}
+.fn-step b {
+  color: var(--ink-2);
+  font-weight: 700;
+}
+.fn-step.bad b {
+  color: var(--warn);
+}
+.fn-time {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 11.5px;
 }
 .fn-foot {
-  margin: 14px 18px 0;
-  padding: 14px 0 18px;
+  margin-top: 16px;
+  padding-top: 14px;
   border-top: 1px solid var(--line);
   display: flex;
   align-items: baseline;
