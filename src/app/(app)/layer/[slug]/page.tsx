@@ -5,6 +5,7 @@ import { useEffect, useState, type CSSProperties } from "react";
 import Band from "@/components/Band";
 import Card from "@/components/Card";
 import Stub from "@/components/Stub";
+import Sparkline from "@/components/charts/Sparkline";
 import TrendChart from "@/components/charts/TrendChart";
 import BreakdownCard from "@/components/layer/BreakdownCard";
 import ExtraTableCard from "@/components/layer/ExtraTableCard";
@@ -142,7 +143,7 @@ export default function LayerPage() {
         style={{ "--sub-cols": Math.ceil(data.subs.length / 2) || 1 } as CSSProperties}
       >
         {data.subs.map((s) => (
-          <div className="subtile" key={s.name}>
+          <div className={`subtile ${s.delta.good ? "sg" : "sb"}`} key={s.name}>
             <span className="sn">
               {s.name}
               <InfoTip metricId={s.metricId} />
@@ -151,6 +152,16 @@ export default function LayerPage() {
               <span className="sv num">{s.value}</span>
               <span className={`delta ${s.delta.good ? "d-good" : "d-bad"}`}>{s.delta.text}</span>
             </span>
+            {s.spark && s.spark.length >= 2 && (
+              <span className="ssp">
+                <Sparkline
+                  values={s.spark}
+                  color={s.delta.good ? "var(--good)" : "var(--crit)"}
+                  unit={s.sparkUnit ?? ""}
+                  decimals={s.sparkDecimals ?? 0}
+                />
+              </span>
+            )}
           </div>
         ))}
       </div>

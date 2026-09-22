@@ -597,7 +597,25 @@ export function buildLayer(
       /* 명시적으로 안 적어 둔 서브 지표는 같은 레이어 사전에서 이름으로 한 번 더 찾아본다.
          모호하면(0개·2개 이상 일치) 정보 아이콘 없이 그냥 둔다. */
       const metricId = raw.metricId ?? findMetricByName(spec.id, m.name);
-      return { name: m.name, value: r.value, delta: r.delta, metricId };
+      /* 개요 타일과 같은 방식 — 서브 지표도 값 하나만 보여주면 지금이 오르는
+         중인지 내리는 중인지 알 수 없다. 모양만 보여주는 미니 스파크라인을 얹는다. */
+      const { unit: subSparkUnit, decimals: subSparkDecimals } = trendFormat(m.kind, m.unit);
+      const spark = makeSeries(
+        metricValue(m, p),
+        relativeDelta(m, p),
+        `${spec.id}sub${m.name}${p}${lens}`,
+        8,
+        m.kind === "rate" || m.kind === "rate2",
+      );
+      return {
+        name: m.name,
+        value: r.value,
+        delta: r.delta,
+        metricId,
+        spark,
+        sparkUnit: subSparkUnit,
+        sparkDecimals: subSparkDecimals,
+      };
     });
 
   const gran = GRAN[p];

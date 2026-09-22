@@ -179,6 +179,11 @@ export interface SubTile {
   delta: Delta;
   /** 지표 사전의 id — 있으면 제목 옆 정보 아이콘이 정의·계산식을 띄운다 */
   metricId?: string;
+  /** 개요 타일과 같은 방식의 미니 스파크라인 원본 값 — 모양만 전달, 정규화는 렌더러가 한다 */
+  spark?: number[];
+  /** 스파크라인 호버 시 각 점을 이 단위·자릿수로 읽는다 — 메인 값과 같은 규칙이어야 한다 */
+  sparkUnit?: string;
+  sparkDecimals?: number;
 }
 
 /**
